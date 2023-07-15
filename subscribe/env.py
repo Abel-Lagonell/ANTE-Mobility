@@ -3,36 +3,29 @@ from player import Player
 import heapq
 from _map import Map
 import traci.constants as tc
+#Online Modules
 from random import choice, randrange
-#from settings import GraphSetting
 from multiprocessing import cpu_count, Manager, Queue, Pool
 import traci
 from operator import itemgetter
 import itertools
-from util import *
 from functools import reduce
-
 import time as tm
 from concurrent.futures import ThreadPoolExecutor as pool
 import threading
-
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
-
 import logging
 import copy
-
 from math import exp
-import sys
-import os
-#sys.path.append("./../poibin-master")
-#print(os.getcwd())
-sys.path.append("./poibin-master")
-
-from poibin import PoiBin
-
+import sys, os
 from sklearn import preprocessing 
+
+#User-made Modules
+sys.path.append("./poibin-master")
+from util import *
+from poibin import PoiBin
 from postprocess import DataCaptureGraph
 
 #todo:
@@ -58,17 +51,9 @@ as of right now the vehicle is only considering one poi at a time without consid
 reward adjustments regarding to time, solve the 1 vehicle problem, allowing vehicles to have a more diverse route
 also adds more chaos on top of only considering the number of possible player being there
 
-
-
-
-
 for temperal coverage create a function interms of average time gap collected at poij
 
 '''
-
-
-
-
 
 
 class Environment(object):
@@ -84,17 +69,13 @@ class Environment(object):
 		self.poi_to_junct = {}  #enter poi id to get junction, enter junction to get poi id
 		self.index_counter = 0
 
-		
-
 		self.poi_list = {}     #poi {poi_key:{veh_key:veh_value}} to keep track of if vehcle is being tracked by the poi to know if
 		#veh is leaving or entering junction
-
 
 		self.success_veh = [] #vehicle success arrived dest
 		self.poi_que = {} # {poiid:{vehid:edge, vehid:edge}} #when player arived to raidus add to this, every 10 sec this is cleared
 
 		self.veh_poi = {} #to keep track of vehicles that are paused on a poi veh:poi need to remove vehicle when leaving
-
 
 		#below are the variables for guis
 		self.veh_data = None #result of veh storing location
@@ -103,10 +84,6 @@ class Environment(object):
 		self.algo = None
 
 		self.t = 0
-
-
-
-
 
 	def stop_vehicle_handle(self, t): #handle when vehicle is stopped calculate the sensing plan with buffered vehicles
 
@@ -120,7 +97,6 @@ class Environment(object):
 					self.generate_bucket() #generate bucket first then reroute #this is the initial loop over all veh and rewards
 					#this is freezing in time all vehicles are not going to move
 
-
 				for poi_key, veh_waiting_list in self.poi_que.items():
 					sp, number_players = self.update_veh_collection_status(veh_waiting_list, poi_key) #this is only called when veh is being handled at poi
 					try:
@@ -131,19 +107,12 @@ class Environment(object):
 
 					for veh, edge in veh_waiting_list.items():
 
-
-
-
 						#adjusting sensing plan generate the buckets and combination this is called for every player wtf?
 						next_poi_junct = self.adjust_sensing_plan(poi_key, veh, sp, edge, reward_value) #when veh route is adjusted does this really need to be adjusted for every veh or maybe it should be only per poi
 
-						#self.player_list[veh].reward += (self.map_data.pois[poi_key].value/pow(len(veh_waiting_list), 2))
-
-						
-
 						try:
 							traci.vehicle.setStop(veh, edge, duration=0)
-							#print(f"i succeeded at resuming {veh}. routes: {traci.vehicle.getRoute(veh)}, index : {traci.vehicle.getRouteIndex(veh)}, current: {traci.vehicle.getRoute(veh)[traci.vehicle.getRouteIndex(veh)]} shouldbe {edge}")
+							
 						except traci.exceptions.TraCIException as e:
 							logging.info(f"i failed at resuming {veh}. routes: {traci.vehicle.getRoute(veh)}, index : {traci.vehicle.getRouteIndex(veh)}, current: {traci.vehicle.getRoute(veh)[traci.vehicle.getRouteIndex(veh)]} shouldbe {edge}")
 							#traci.vehicle.setStop(veh, edge, duration=0)
@@ -151,28 +120,14 @@ class Environment(object):
 							logging.info(f"retrying to start using current edge {traci.vehicle.getRoute(veh)[traci.vehicle.getRouteIndex(veh)]}")
 
 							try:
-								#traci.vehicle.setStop(veh, traci.vehicle.getRoute(veh)[traci.vehicle.getRouteIndex(veh)], duration=0) 
 								routes = self.map_data.find_route_reroute(traci.vehicle.getRoute(veh)[traci.vehicle.getRouteIndex(veh)], next_poi_junct).edges
 								traci.vehicle.setRoute(veh, routes)
-
-								#traci.vehicle.setStop(veh, traci.vehicle.getRoute(veh)[traci.vehicle.getRouteIndex(veh)], duration=0)
-								
 
 							except traci.exceptions.TraCIException as e:
 								logging.info(f"reattempt failed too... {traci.vehicle.getRoute(veh)} {e}")
 								self.track_veh = veh
-
-						
 								raise traci.exceptions.TraCIException("i failed here wtf")
 
-
-							
-
-							#traci.vehicle.setStop(veh, edge, duration=0)
-							
-						
-
-						#traci.vehicle.setStop(veh, traci.vehicle.getRoute(veh)[traci.vehicle.getRouteIndex(veh)], duration=0)
 						logging.info(f"Moving {veh} at step {t}, sp calcaulated for {len(veh_waiting_list)} player(s)")
 
 					self.post_process_graph.poi_visited_instance[t][poi_key] = list(veh_waiting_list.keys()) #for storing simultanous poi visits from all players at a poi
@@ -182,8 +137,6 @@ class Environment(object):
 
 				self.post_process_graph.rc_visited_instance[t] = self.post_process_graph.calculate_test_coverage(custom_player_list=list(self.player_list.values()))
 				self.post_process_graph.rw_visited_instance[t] = self.post_process_graph.get_avg_reward(custom_player_list=list(self.player_list.values()))
-
-
 
 	def calculate_next_poi_greedy(self, veh_id, current_node, add=False):
 		player = self.player_list[veh_id]
@@ -196,18 +149,13 @@ class Environment(object):
 
 		assert len_player >0, 'something is wrong no player in system'
 
-
-
 		top_index = int(self.GraphSetting.poi_consider * self.GraphSetting.reward_numbers)
 
 		weight_dict_sorted = {k: v for k, v in sorted(self.player_list[veh_id].poi_distance_temp.items(), key=lambda item: item[1]) if not k in player.past_recent_nodes} #sort the dict based on distance to mysel
 
-
 		weight_dict = {key:weight_dict_sorted[key] for key in list(weight_dict_sorted.keys())[:top_index]}
 
 		print("weight dict value for greedy is ", weight_dict)
-
-
 
 		#for poi_id, self.map_data.pois[poi_id] in self.map_data.pois.items(): #iteration over every poi
 		for poi_id, weight_value in weight_dict.items():
@@ -226,7 +174,6 @@ class Environment(object):
 				if poi_id in self.player_list[veh_id].pois_visited:
 					continue
 
-			#assert total_cost <= self.player_list[veh_id].distance_capacity, f"failed {veh_id} dist cap {self.player_list[veh_id].distance_capacity} < {total_cost} going to {poi_id}"
 			assert poi_id in self.player_list[veh_id].current_poi_distribution, f"failed {poi_id} not in {veh_id} distribution"
 
 			e_u = self.map_data.pois[poi_id].value
@@ -236,43 +183,31 @@ class Environment(object):
 				max_eu_location = poi_id
 				final_distance_cap = total_cost
 
-
-
 		if final_distance_cap:
 			self.player_list[veh_id].distance_capacity -= final_distance_cap
 
 		return max_eu_location
 
-
-
-
-
+	#find the n number of closest pois 
 	def calculate_next_poi_random(self, veh_id, current_node, add=False):
-
-		#find the n number of closest pois 
 
 		player = self.player_list[veh_id]
 
 		max_eu_location = None #returns none or target poi id
 
-
 		player_data = self.player_list if add else traci.vehicle.getAllSubscriptionResults()
 		len_player = len(player_data)
 		assert len_player >0, 'something is wrong no player in system'
 
-
-		#weight_dict = copy.deepcopy(player.poi_to_destination) #weight dict is simply the distance from poi to destination of player
 		top_index = int(self.GraphSetting.poi_consider * self.GraphSetting.reward_numbers)
 
 		#focus on the top percentage of pois thats closest to me
 
 		weight_dict_sorted = {k: v for k, v in sorted(self.player_list[veh_id].poi_distance_temp.items(), key=lambda item: item[1]) if not k in player.past_recent_nodes} #sort the dict based on distance to mysel
 
-
 		weight_dict = {key:weight_dict_sorted[key] for key in list(weight_dict_sorted.keys())[:top_index]}
 
-
-		#add destination as a poi target. the weight for the destination is the distance between the current position to target destination
+		# add destination as a poi target. the weight for the destination is the distance between the current position to target destination
 		#which means the closer the vehicle is to it destination, the more likely its able to choose the destination as the next poi
 
 		cost_to_dest = self.map_data.find_best_route(current_node, player.dest_junc).travelTime
@@ -288,8 +223,6 @@ class Environment(object):
 		else:
 
 			weight_dict = {key:value for key, value in weight_dict.items() if (value!=0)}
-
-
 
 		#if weight dict is none means the vehicle cant go to any poi due to its distance capacity
 
@@ -314,7 +247,6 @@ class Environment(object):
 
 				final_distance_cap = weight_dict[poi_id_choice]
 
-
 			#logging.info(f"{poi_id_choice} {self.player_list[veh_id].target_poi}")
 
 			if poi_id_choice == self.player_list[veh_id].target_poi:
@@ -330,26 +262,13 @@ class Environment(object):
 		else:
 			logging.info(f"{veh_id} no poi can go due to distance capacity {player.distance_capacity}")
 
-
-
-
-
-
-
 		return max_eu_location
 
-
-	def calculate_next_poi_new(self, veh_id, current_node, add=False):#add to show that its initializing
+	def calculate_next_poi_new(self, veh_id, current_node, add=False):# add to show that its initializing
 		#this is called when player is added and is called every time a play arrived at a poi
 		#loops through every player and every poi to find the player prob for every poi
 
-
-		#print("current node is ", current_node)
-
-
-
 		player = self.player_list[veh_id]
-
 
 		max_eu = 0
 		max_eu_location=None
@@ -358,34 +277,20 @@ class Environment(object):
 		player_data = self.player_list if add else traci.vehicle.getAllSubscriptionResults()
 		len_player = len(player_data)
 
-
 		esp_dict = {} #this contains the esp values to all the pois that are within the distance capcity
-
 
 		top_index = int(self.GraphSetting.poi_consider * self.GraphSetting.reward_numbers)
 
 		weight_dict_sorted = {k: v for k, v in sorted(self.player_list[veh_id].poi_distance_temp.items(), key=lambda item: item[1]) if not k in player.past_recent_nodes} #sort the dict based on distance to mysel
 
-
-		#weight_dict = {key:weight_dict_sorted[key] for key in list(weight_dict_sorted.keys())[:top_index]}
-
-
-
-		
-
-		#for poi_id, self.map_data.pois[poi_id] in self.map_data.pois.items():
-		#for poi_id, weight_value in weight_dict.items():
 		for i, (poi_id, weight_value) in enumerate(weight_dict_sorted.items()): #find the percentage of rad
 
 			assert len_player >0, 'something is wrong no player in system'
-
 
 			if not poi_id in self.player_list[veh_id].poi_potential:
 				#player cant go to this poi due to distance capacity
 				continue
 		
-
-
 			print(f"{veh_id} considering going to {poi_id}")
 
 			try:
@@ -398,15 +303,10 @@ class Environment(object):
 				if poi_id in self.player_list[veh_id].pois_visited:
 					continue
 
-
 			if total_cost > self.player_list[veh_id].distance_capacity:
 				continue
-			#assert total_cost <= self.player_list[veh_id].distance_capacity, f"failed {veh_id} dist cap {self.player_list[veh_id].distance_capacity} < {total_cost} going to {poi_id}"
+
 			assert poi_id in self.player_list[veh_id].current_poi_distribution, f"failed {poi_id} not in {veh_id} distribution"
-
-
-
-
 
 			if len_player <=1:  #im the only one there
 				e_u = self.map_data.pois[poi_id].value
@@ -415,11 +315,7 @@ class Environment(object):
 				#self.calculate_utility_new(veh_id, poi_id, self.map_data.pois[poi_id].value, player_data)
 				e_u, e_sp = self.calculate_utility_new(veh_id, poi_id, self.map_data.pois[poi_id].value, player_data)
 
-
-
-
 			esp_dict[poi_id] = e_sp*total_cost #this dict conatins the sensing plan with cost*esp 
-
 
 			if (e_u > max_eu) and (e_sp <= player.capacity) and (poi_id != player.target_poi) and (not poi_id in player.past_recent_nodes): #max eu, fit esp, not current poi, and not prev poi
 				max_eu = e_u
@@ -430,42 +326,10 @@ class Environment(object):
 					#this means the 30% is already finsished, find the first max eu location and break
 					break
 
-
-
-
-			#reset poi potential players or it might affect next time bucket generation
-			#self.map_data.pois[poi_id].player_potential = {}
-				
-
-
 		if final_distance_cap:
 			self.player_list[veh_id].distance_capacity -= final_distance_cap
 
-		#self.player_list[veh_id].poi_potential = {}
-
-		'''
-
-		if (not max_eu_location) and esp_dict:  #this is only considering esp dictionary
-			#no poi is chosen weighted random here based on esp and eu and
-
-
-
-			weight_dict = esp_dict
-
-
-
-			total_sum = sum([1/x for x in weight_dict.values()])
-			prob_distribute = [(1/x)/total_sum for x in weight_dict.values()] #the smallest esp value will have the highest prob
-
-			logging.debug(f"Weighted random in ATNE {weight_dict}, prob: {prob_distribute}")
-
-			selected_index = np.random.choice(len(weight_dict), 1, p=prob_distribute)
-
-			max_eu_location = list(weight_dict.keys())[selected_index[0]]
-		'''
-
 		return max_eu_location #this returns the poi id
-
 
 	@timer
 	def calculate_utility_new(self, veh_id, poi_id, reward, player_data):
@@ -490,7 +354,6 @@ class Environment(object):
 			
 			#above line gets an error not finding poi id as key
 
-
 			pbd = PoiBin(temp_prob_list)
 
 			prob_dict = {} #for dbg
@@ -513,15 +376,11 @@ class Environment(object):
 				m_eu_dict[m] = eu
 				m_esp_dict[m] = esp
 
-			#logging.debug(f"{veh_id} to {poi_id} time bucket: {time} original_prob:{temp_prob_list} meu:{m_eu_dict} mesp:{m_esp_dict}")
 			dbg_prob_dict[time] = prob_dict
 			dbg_esp_dict[time] = sp_dict
 
 			time_eu_dict[time] = m_eu_dict
 			time_esp_dict[time] = m_esp_dict
-
-			#logging.debug(f"{veh_id} for time {time} prob list is {temp_prob_list}")
-
 
 		logging.debug(f"prob and sp {veh_id} to {poi_id} sp:{dbg_esp_dict} prob:{dbg_prob_dict}")
 
@@ -533,21 +392,12 @@ class Environment(object):
 
 		return total_eu, total_esp
 
-
-
-
-			
-				
-
-
-
 	def calculate_utility(self, veh_id, poi_id, reward, player_data):
 		'''
 		calculate the expected util for particular i veh_id to poi_id
 		sum up all the times
 		'''
-
-
+		
 		#iteration through poi_combintaions and populate
 
 		self.player_list[veh_id].combinations = defaultdict(list)  #reset player combinations
@@ -556,7 +406,6 @@ class Environment(object):
 		player_data = self.map_data.pois[poi_id].player_potential
 
 		player_data_keys = list(player_data.keys())
-
 
 		time_eu_dict = {} #time as key m_eu_dict as value
 		time_esp_dict = {}
@@ -584,7 +433,6 @@ class Environment(object):
 					else:
 						arriving_prob = (1 - self.find_probability(time, self.player_list[key].current_poi_distribution[poi_id]))
 
-
 					prob *= arriving_prob
 
 				logging.debug(f"OLD PROB {veh_id} to {poi_id} for {m} players {prob}")
@@ -596,28 +444,19 @@ class Environment(object):
 
 			time_eu_dict[time] = m_eu_dict
 			time_esp_dict[time] = m_esp_dict
-
-
 		
 		total_eu = sum([sum(_m.values()) for _time, _m in time_eu_dict.items()])
 
 		total_esp = sum([sum(_m.values()) for _time, _m in time_esp_dict.items()])
 
-		
-
 		logging.info(f"OLD: {veh_id} to {poi_id} eu is {total_eu} esp is {total_esp} current cap:{self.player_list[veh_id].capacity}")
 
 		return total_eu, total_esp
-
-
-
 
 	#this function need to be parallized or written in c
 	def generate_bucket(self, veh_id=None):
 
 		#when veh arrive at destination the bucket should be changed for each veh the same combination no longer apply
-
-
 		#this also sets the potential players to every potential pois based on distance cap
 
 		#this is caled everytime player arrive at a poi
@@ -627,49 +466,30 @@ class Environment(object):
 			print(f"Generating buckets for {veh_id}....")
 
 			#for each veh need to reset their dic before generating buckets
-
-			
-
 			for poi_id, poi_value in self.map_data.pois.items():
-
-				#poi_value.player_potential = {} #testing to reset poi potential in her
-
-
-
 
 				key = self.map_data.pois[poi_id].junction
 				value = self.map_data.pois[poi_id].value
-
-				
-				#route_value = self.map_data.find_route_reroute(current_edge, key) #find it from the vehicle to the poi
 
 				if veh_id in self.veh_poi:
 					#vehicle is paused at a poi just use the poi cost to another poi if its there
 
 					if poi_id == self.veh_poi[veh_id]:
 						continue
-
 					
 					try:
-						#print("im here")
 						route_value = self.map_data.pois[poi_id].other_poi_cost[self.veh_poi[veh_id]]
 					except KeyError:
 						try:
-							#print("im here again")
 							#check the other poi
 							route_value = self.map_data.pois[self.veh_poi[veh_id]].other_poi_cost[poi_id]
 						except KeyError:
-							#print("im here again again")
 							#both dont have the stored now calculate
 
 							route_value = self.map_data.find_best_route(key, self.map_data.pois[self.veh_poi[veh_id]].junction)
 
-							#print(f"{self.veh_poi[veh_id]} {poi_id}")
-
 							self.map_data.pois[poi_id].other_poi_cost[self.veh_poi[veh_id]] = route_value
 							self.map_data.pois[self.veh_poi[veh_id]].other_poi_cost[poi_id] = route_value
-
-					
 
 				else:
 					try:
@@ -678,15 +498,12 @@ class Environment(object):
 						print(f"i failed at 627 {e} {veh_id} {current_edge} {key}")
 						exit()
 
-				
-
 				if add:
 					route_value_todest = self.map_data.find_best_route(key, self.player_list[veh_id].dest_junc) #this can be static but incase if destination is changing
 					self.player_list[veh_id].poi_to_destination[poi_id] = route_value_todest
 				else:
 					route_value_todest = self.player_list[veh_id].poi_to_destination[poi_id]
 
-				#assert route_value and route_value_todest, f"wtf one of the value is returning NONE {route_value} {route_value_todest} {veh_id} {poi_id} {veh_id in self.veh_poi}"
 				total_time = 0
 
 				if route_value:
@@ -694,15 +511,10 @@ class Environment(object):
 				if route_value_todest:
 					total_time += route_value_todest.travelTime
 
-				#total_time = route_value.travelTime + route_value_todest.travelTime
-
 				try:
 					self.player_list[veh_id].poi_distance_temp[poi_id] = route_value.travelTime #poi need to be static
 				except AttributeError:
-					#print(f"WTTFFFF I failed at adding in travel time from {key} to {self.map_data.pois[self.veh_poi[veh_id]].junction} {route_value}")
 					self.player_list[veh_id].poi_distance_temp[poi_id] = 0
-
-
 
 				if self.player_list[veh_id].distance_capacity < total_time:
 					#when distance capacity is less than the total time the poi is not considered for 
@@ -715,27 +527,20 @@ class Environment(object):
 				try:
 					self.player_list[veh_id].poi_potential[poi_id] = route_value.travelTime  #from veh to poi
 				except AttributeError:
-					#print(f"WTTFFFF I failed at adding in travel time from {key} to {self.map_data.pois[self.veh_poi[veh_id]].junction} {route_value}")
 					self.player_list[veh_id].poi_distance_temp[poi_id] = 0
+				
 				try:
-
 					self.map_data.pois[poi_id].player_potential[veh_id] = route_value_todest.travelTime  #from poi to veh destination #if vehicle desitnation is dynamic it works too
 				except AttributeError:
 					self.map_data.pois[poi_id].player_potential[veh_id] = 0
 
-				
 				if route_value:
 
 					route_edges = route_value.edges
 					self.player_list[veh_id].temp_edges[key]=route_edges
 
-
-					#start_time = tm.perf_counter()
-
 					new_mean = sum([self.map_data.edges[e].distance/self.map_data.edges[e].speed for e in route_edges if not ':' in e]) #sum of the means of edges within the route to each poi
 					new_std = reduce(lambda x,y:np.sqrt(x**2+y**2), [self.map_data.edges[e].std for e in route_edges if not ':' in e]) # combine the std of all the edges
-
-					#logging.debug(f"combinging mean and std for roads using TIME {tm.perf_counter() - start_time}")
 
 					#: is for junctions, when vehicle in motion, tc.roadid can return junction
 
@@ -743,23 +548,14 @@ class Environment(object):
 
 					result = generate_speed_bucket(route_array, bins_num=6) #generate histogram with bin number
 
-
 					self.player_list[veh_id].current_poi_distribution[poi_id] = result #save this histogram information to the player object
-						
-
-
 
 					#current poi_distribution {poi_id:histogram}
-	
-
-
 
 		if veh_id: #finding dict for only 1 vehicle
 			set_bucket(veh_id, self.player_list[veh_id].current_edge, add=True)
 			
 		else: #for when 1 vehicle arrived at a poi need to evaluate the next poi thus need to update every other players bucket
-
-
 			
 			for poi_id, poi_value in self.map_data.pois.items():
 				poi_value.player_potential = {}
@@ -767,15 +563,12 @@ class Environment(object):
 			for veh_id, veh_value in traci.vehicle.getAllSubscriptionResults().items():
 				self.player_list[veh_id].poi_potential = {}
 
-			
-
 			for veh_id, veh_value in traci.vehicle.getAllSubscriptionResults().items():
 				#self.player_list[veh_id].poi_potential = {}
 				veh_edge_current = veh_value[tc.VAR_ROAD_ID]
 
 				if not veh_edge_current:
 					veh_edge_current = veh_value[tc.VAR_EDGES][veh_value[tc.VAR_ROUTE_INDEX]]
-
 
 				if not veh_edge_current:
 					print(f"cant find the cureent edge {veh_id} values is {veh_value} index is {tc.VAR_ROAD_ID} list of arrival {self.success_veh}")
@@ -785,8 +578,6 @@ class Environment(object):
 
 			#because we are in the player loop after updating the potential pois for this particular player, go ahead and generate the combination for this player
 
-	
-		
 	def set_combs(self, poi_id, add=False): #setting the combinations of those players who are potentially able to participate in this poi
 		total_players = len(self.map_data.pois[poi_id].player_potential)
 		print(f"{poi_id} is generating combinations for {total_players}")
@@ -796,38 +587,17 @@ class Environment(object):
 			self.map_data.pois[poi_id].combinations[i+1] = combs #
 			self.set_combinations_player(i+1, combs) #setting combs for theplayers based off the comb
 
-
-	
-
-
-
-
-
-
 	def compute_sensing_plan(self, player_amount, reward, cost):
-		#print('player amount is ', player_amount)
 		if player_amount == 1:
 			return self.GraphSetting.sensing_plan_one
-			#return (reward/cost)/2
-
 		sensing_plan = ((player_amount-1)*reward)/((player_amount**2)*cost)
-
-		#print('sensning plan value is ', sensing_plan)
 		return sensing_plan
-
 
 	def print_pc(self):
 		for key, value in self.player_list.items():
 			print(value.combinations)
 
-			#value.combinations = defaultdict(list)
-
-
 	def set_combinations_player(self, i, combs):
-		
-		
-
-
 		while True:
 			try:
 				comb = next(combs)#combs.pop()
@@ -837,21 +607,16 @@ class Environment(object):
 			except StopIteration as e:
 				break
 
-
-
 	def set_combinations(self, add = False):
 		#this gets combinations for all the players after all the players has been initialized
 		#intialize combination
 		#this need to be fixed for memory error cant store all combinations for every number of vehicles
 		#where should the poi potential players be populated, shoudl be inside calculate next poi new, but if its populated there then combinations should be generated per poi based
 
-
-		'''
-		
+		'''	
 		print(f"All players added len: {len(self.player_list)} generating combinations...")
 		player_keys = list(self.player_list.keys())
 		all_combs = {}
-
 
 		for i in range(len(self.player_list)):
 			#print("generating combinations")
@@ -859,17 +624,11 @@ class Environment(object):
 			#all_combs[i+1] = combs
 			#print("setting combinations")
 			self.set_combinations_player(i+1, combs)
-
 		'''
 
 		if add:
-
 			for player_id, player_value in self.player_list.items():
-
 				self.next_poi_reroute(player_id, player_value.start, player_value.prev_junction, add=add)
-
-
-
 
 	#this function has a bug
 	def find_probability(self, time, distribution):
@@ -890,11 +649,6 @@ class Environment(object):
 			if upper_index == lower_index and upper_index==len(distribution[0]):
 				lower_index -= 1
 
-
-
-			#print(f'time searching for is {time}, upper:{upper_index}, lower:{lower_index}')
-			#print(f'bucket is:', buckets)	
-			#print(f'prob is:', distribution[0])	
 		except ValueError:
 			lower_index = None
 
@@ -923,12 +677,8 @@ class Environment(object):
 		try:
 			print(f"{veh_id} shortest path travel time {routes.travelTime}")
 
-
-
-
 			if self.GraphSetting.distance_capacity[0] == self.GraphSetting.distance_capacity[1]:
 				self.player_list[veh_id].distance_capacity = (self.GraphSetting.distance_capacity[0] * routes.travelTime)
-
 
 			else:
 				self.player_list[veh_id].distance_capacity = np.random.randint(routes.travelTime * self.GraphSetting.distance_capacity[0], routes.travelTime * self.GraphSetting.distance_capacity[1])
@@ -938,14 +688,11 @@ class Environment(object):
 		#if not self.algo == "BASE":
 		self.generate_bucket(veh_id=veh_id)
 
-
 		self.index_counter+=1
 
 		print(f"Added player {veh_id}, dist_cap: {self.player_list[veh_id].distance_capacity} going towards {dest_junc}")
 
 		logging.info(f"Added player {veh_id}, dist_cap: {self.player_list[veh_id].distance_capacity} going towards {dest_junc}")
-
-
 
 	def reroute(self, veh_id, current_edge, upcome_edge, destination, add=False):
 		try:
@@ -960,14 +707,7 @@ class Environment(object):
 		shortest_route = list(shortest_route.edges)
 
 		traci.vehicle.changeTarget(veh_id, shortest_route[-1])
-
-
-
 		return shortest_route
-
-
-
-		
 
 	def update_capacity(self, veh, esp):
 
@@ -977,10 +717,7 @@ class Environment(object):
 				self.player_list[veh].capacity = 0
 			else:
 				self.player_list[veh].capacity -= esp
-
 				#for postprocessing
-
-
 
 			if self.player_list[veh].capacity <= 0:
 				self.player_list[veh].capacity = 0
@@ -988,11 +725,6 @@ class Environment(object):
 
 		except KeyError:
 			print(veh_value, 'Error')
-
-
-
-
-
 
 	def update_veh_collection_status(self, veh_value, poi_key):
 		#iterate through all the vehicles
@@ -1034,7 +766,6 @@ class Environment(object):
 						if self.player_list[new_key].capacity < self.player_list[min_cap_veh_id].capacity:
 							min_cap_veh_id = new_key
 
-
 			if min_cap_veh_id:
 				del temp_veh_value[min_cap_veh_id]
 				veh_value = temp_veh_value
@@ -1043,9 +774,6 @@ class Environment(object):
 				if i==1:
 					esp = self.GraphSetting.sensing_plan_one #1#(self.map_data.pois[poi_key].value / 5) /2 #updated sensing plan
 				return esp, i
-
-
-
 
 			counter_list.append(counter)
 			i_list.append(i)
@@ -1065,7 +793,6 @@ class Environment(object):
 					self.success_veh.append(veh_id)
 					print(f"vehicle {veh_id} arrived at destination")
 
-
 	def wait_in_radius(self, poi_key,veh_id):
 		#print("before stop routes ", traci.vehicle.getRoute(veh_id))
 
@@ -1077,8 +804,6 @@ class Environment(object):
 		while True:
 			try:
 				traci.vehicle.setStop(veh_id, routes[route_index])
-			
-
 				break
 			except traci.exceptions.TraCIException:
 
@@ -1095,12 +820,9 @@ class Environment(object):
 
 		print(f"stopping.... {veh_id} at {poi_key}")
 
-
-		
 		edge = routes[route_index]
-			
-		try:
 
+		try:
 			if not self.poi_que[poi_key]:
 				self.poi_que[poi_key]= {veh_id:edge}
 			else:
@@ -1110,22 +832,13 @@ class Environment(object):
 
 		self.veh_poi[veh_id] = poi_key
 
-
 		self.track_veh = veh_id
-
-
-
-		#print(self.poi_que[poi_key])
-		#print("after stop routes ", traci.vehicle.getRoute(veh_id))
 
 	@timer
 	def adjust_sensing_plan(self, key, veh, sp, current_edge, reward_value):
 		#key is the current poi key
 		#self.player_list[veh].target_poi = self.map_data.pois[key].junction #incase veh accidentally encounter poi, need to update
 		#if vehicle predetermined to go to destination but encounter a poi then update
-
-		#if not self.algo == "BASE":
-		#	self.generate_bucket() #generate bucket first then reroute #this is the initial loop over all veh and rewards
 
 		self.player_list[veh].visited_sp_list.append(key)
 
@@ -1149,21 +862,15 @@ class Environment(object):
 				self.player_list[veh].goinghome = True
 				self.player_list[veh].distance_capacity = 0
 
-
-
 		if self.algo == "BASE":
 			return None
-
 
 		next_poi_junct = self.next_poi_reroute(veh, current_edge, self.map_data.pois[key].junction)
 
 		return next_poi_junct
 
-
-
 	def add_stm(self, veh_id, next_node):
 		#the passt recent nodes contains the poi id
-
 
 		if len(self.player_list[veh_id].past_recent_nodes) < self.GraphSetting.max_memory_size:
 			self.player_list[veh_id].past_recent_nodes.append(next_node) #sumo junction is added to memory
@@ -1171,8 +878,6 @@ class Environment(object):
 			if self.GraphSetting.max_memory_size != 0:
 				self.player_list[veh_id].past_recent_nodes.pop(0)
 				self.player_list[veh_id].past_recent_nodes.append(next_node)
-
-		
 
 	def next_poi_reroute(self, veh, current_edge, prev_junction, add=False): #this is called everytime we want to determine poi and reroute
 
@@ -1200,10 +905,6 @@ class Environment(object):
 			print(f"player {veh} distance capacity limit reached going towards destination...")
 			logging.info(f"player {veh} distance capacity limit reached going towards destination...")
 
-
-
-
-		
 		if (not next_poi) or self.player_list[veh].goinghome:
 			#this is the weighted random jumps
 			#right now set to go home if none fit
@@ -1226,18 +927,11 @@ class Environment(object):
 
 			self.add_stm(veh, next_poi) #add stm after the next poi is decided
 
-
-			#logging.info(f"next poi deteremined setting visited")
 			logging.info(f"{veh} going towards {next_poi} DC:{self.player_list[veh].distance_capacity} CAP:{self.player_list[veh].capacity}")
-
-
 
 		st = self.reroute(veh, None, current_edge, next_junct)
 
 		return next_junct
-
-
-
 
 	def process_poi(self, t):
 		#should check is the vehicle is currently on the poi adjacent edges
@@ -1269,11 +963,6 @@ class Environment(object):
 						if not t in self.post_process_graph.temp_coverage[key]:
 							self.post_process_graph.temp_coverage[key].append(t)
 
-
-						#self.post_process_graph.rc_visited_instance[t] = self.post_process_graph.calculate_test_coverage(custom_player_list=list(self.player_list.values()))
-						#self.post_process_graph.rw_visited_instance[t] = self.post_process_graph.get_avg_reward(custom_player_list=list(self.player_list.values()))
-					
-
 						self.poi_list[key][veh] = veh_value #add vahicle in poi list for removal later
 
 					elif veh in self.poi_list[key] and self.player_list[veh].prev_poi != key:
@@ -1288,9 +977,5 @@ class Environment(object):
 							#print('reached junction')
 							continue
 
-
-
-
 if __name__ == '__main__':
 	pass
-	#problem, high expected sensing plan, but when 

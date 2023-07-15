@@ -1,9 +1,8 @@
 from collections import defaultdict
 
-
+# Automated Vehicle for london grid system
 class Player(object):
 	def __init__(self, veh_id, routes, passed_junction, dest_junc, target_poi=None):
-
 
 		#constants
 		self.veh_id = veh_id
@@ -37,16 +36,12 @@ class Player(object):
 
 		self.goinghome=False #determine if the veh should be going towards destination
 
-
-
 		#track of what poi and how many players the sp is calculate for
-
 
 		#grid post proessing stuff
 		self.node_hit = [] #for post processing keep track of all the nodes its been through
 		self.collected_sp_list = []  #for calculated real coverage and not ru #store as poi key, the poi key the player is collected from
 		self.visited_sp_list = [] # the poi key where the player visited
-
 
 		self.expecting_to_collect = False
 		self.random_steps = 0
@@ -62,15 +57,12 @@ class Player(object):
 
 		self.pois_visited = {}
 		
-
-
-		
 	def modify(self, routes):
 		#this for when updating players
 		self.routes = routes
 		self.current_edge = routes[0]
 
-		
+# Automated Vehicle for grid system
 class GridPlayer(object):
 	def __init__(self, id_value, start, destination):
 		self.id_value = id_value
@@ -98,7 +90,6 @@ class GridPlayer(object):
 		self.shortest_path = False
 		self.current_location = None
 
-
 		self.expecting_to_collect = False
 		self.random_steps = 0
 		self.expected_collection_steps = 0
@@ -109,14 +100,11 @@ class GridPlayer(object):
 		self.true_positive = 0 #expected to collect and collected
 		self.false_negative = 0 #didnt expect to collect and didnt collect
 
-		
-
 	def get_next(self):
 		#print(self.node_path, self.node_index)
 		value= self.node_path[self.node_index]
 		self.node_index+=1
 		return value
-
 
 	def __repr__(self):
 		#return repr((self.start, self.destination, self.node_hit, self.reward_hit))

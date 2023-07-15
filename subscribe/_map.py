@@ -1,11 +1,10 @@
-#when the car moves its always have be aware of its neighboors, need the broadcast to find the naighboor location
-
+#when the car moves its always have be aware of its neighbors, need the broadcast to find the neighbor location
 
 #this map class is handled by the server
 #to update user map the server handle requests
-from util import *
+
+#Online Modules
 from xml.dom import minidom
-from settings import Settings
 import traci
 from operator import attrgetter
 from concurrent.futures import ProcessPoolExecutor as pool
@@ -13,20 +12,23 @@ from multiprocessing import cpu_count
 import os
 import math
 import numpy as np
+
+# User-made Modules
+from settings import Settings
 from graph import Graph
 from util import *
 
 
-
+#Point Of Sensing Interest 
 class Poi(object):
 	def __init__(self, junction, value):
-		self.junction = junction
-		self.value = value
+		self.junction = junction #Location of the poi
+		self.value = value # Potential reward of the poi
 		self.player_potential = {} #player_id:distance from poi to player_destination #this tells the poi which player is going to it
 		self.combinations = {} #combinations for each potential players
 		self.other_poi_cost = {} #dynamic programming going towards other pois from this poi. poi_id:distance
 
-
+# A Road, for purposes of simplification we assume that a road is an edge
 class Edge(object):
 	def __init__(self, _from, _to, speed, distance, std = 10, grid=False):
 		self._from = _from
@@ -41,8 +43,7 @@ class Edge(object):
 			self.bucket = generate_speed_bucket(self.distribution)
 			self.distribution_time = self.distance/self.distribution #nparray
 
-
-
+# A Junction, for purposes of simplification we assume that a junction is an intersection of the edges
 class Junctions(object):
 	def __init__(self, coord, junction_id):
 		#each junction would contain a utility matrix showing
@@ -59,10 +60,8 @@ class Junctions(object):
 
 	def __repr__(self):
 		return repr((self.junction_id, self.x,self.y))
-		
 
-
-
+#The collection of the edges and junctions
 class Map(object):
 	def __init__(self, sumo_cfg, grid=False, simple_grid=False):
 		'''
@@ -75,7 +74,6 @@ class Map(object):
 		self.edges = {}
 		self.junctions = {}
 		self.pois = {} #poi value as key, poi object as object
-
 
 		if self.grid:
 			if not self.simple_grid: #simple grid is for visualization to find ne
@@ -96,7 +94,6 @@ class Map(object):
 	def get_distance(x2,y2,x1,y1):
 		return math.sqrt((x2 - x1)**2+(y2 - y1)**2)
 
-
 	def parse_map(self): #new parse map for grid london
 
 		print("parsing map...")
@@ -115,15 +112,11 @@ class Map(object):
 
 		speed_std_dict = self.get_uber_speed("uberspeed.xml")
 
-
-
 		for item in junction_list:
 			junct_id = item.attributes['id'].value
 			self.junctions[junct_id] = Junctions((float(item.attributes['x'].value), float(item.attributes['y'].value)), item.attributes['id'].value)
 
-
 		for item in edge_list:
-			#self.edges[item.attributes['id'].value] = Edge(item.attributes['from'].value, item.attributes['to'].value, float(item.attributes['speed'].value), self.calculate_distance(item.attributes['from'].value, item.attributes['to'].value))
 			self.edges[item.attributes['id'].value] = Edge(item.attributes['from'].value, item.attributes['to'].value, float(speed_std_dict[item.attributes['id'].value][0]), self.calculate_distance(item.attributes['from'].value, item.attributes['to'].value), std=float(speed_std_dict[item.attributes['id'].value][1]), grid=False)
 			self.junctions[item.attributes['from'].value].adjacent_edges_to.append(item.attributes['id'].value) #takes edge and append it to adjacent edge list of from node
 			self.junctions[item.attributes['to'].value].adjacent_edges_from.append(item.attributes['id'].value)
@@ -137,13 +130,9 @@ class Map(object):
 		speed_list = [x for x in speed_xml.getElementsByTagName('edge')]
 		for item in speed_list:
 			speed_std_dict[item.attributes['id'].value] = tuple((item.attributes["mean"].value, item.attributes["std"].value))
-
 		return speed_std_dict
 
-
 	def populate_edges_junctions(self): #need this for grid4 still and grid in general
-
-
 		self.ne_mapping = {}
 
 		row_col_dict = {}
@@ -169,8 +158,6 @@ class Map(object):
 			self.ne_mapping[i] = junct_id
 			self.junctions[junct_id] = Junctions((float(item.attributes['x'].value), float(item.attributes['y'].value)), item.attributes['id'].value)
 
-
-			#print(junct_id)
 			row_col_dict[junct_id] = junct_id[4:]
 
 		self.ne_mapping.update(dict((v, k) for k, v in self.ne_mapping.items()))
@@ -178,7 +165,6 @@ class Map(object):
 		print("parsing edges... ")
 
 		for item in edge_list:
-			#print(f"parsing {item}")
 			self.edges[item.attributes['id'].value] = Edge(item.attributes['from'].value, item.attributes['to'].value, float(item.childNodes[1].attributes['speed'].value), self.calculate_distance(item.attributes['from'].value, item.attributes['to'].value), grid=True)
 			self.junctions[item.attributes['from'].value].adjacent_edges_to.append(item.attributes['id'].value) #takes edge and append it to adjacent edge list of from node
 			self.junctions[item.attributes['to'].value].adjacent_edges_from.append(item.attributes['id'].value)
@@ -207,10 +193,8 @@ class Map(object):
 
 		return row_col_dict
 
-
 	def calculate_distance(self, junc_from, junc_to):
 		return Map.get_distance(self.junctions[junc_to].x, self.junctions[junc_to].y, self.junctions[junc_from].x, self.junctions[junc_from].y)
-
 
 	#given edge and dest node find best route, can combine with find best route
 	@timer
@@ -226,8 +210,6 @@ class Map(object):
 					shortest_route = route
 
 		return shortest_route
-
-	
 
 	#o(n^2) need to loop through all the edges that is connected to the node from and to
 	@timer
@@ -248,7 +230,6 @@ class Map(object):
 					print(f"no route between {start_edge} to {end_edge}")
 					continue
 
-
 				if not best_route:
 					best_route = current_route	
 				else:
@@ -263,10 +244,7 @@ class Map(object):
 						weight_dict[key_val] = current_route
 
 		if weights:
-
-
 			return weight_dict, best_route
-
 		return best_route
 
 	def find_adjacent_cells(self, sumo_junction, param='to'):
@@ -280,13 +258,7 @@ class Map(object):
 			for edge in self.junctions[sumo_junction].adjacent_edges_from:
 				adjacent_list.append(self.edges[edge]._from)
 
-
 		return adjacent_list
-
-
-
-
-
 
 if __name__ == '__main__':
 	pass

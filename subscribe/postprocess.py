@@ -1,40 +1,28 @@
+#Online Modules
 import numpy as np
 import matplotlib.pyplot as plt
-#import seaborn
 import json
 from operator import attrgetter
 import pickle
 import os, glob
-from settings import Settings
 import pandas as pd
 from scipy import stats
 from itertools import combinations
-import numpy as np
 import datetime
-
 import traci
 import random
 import math
 import argparse
 import matplotlib
-
+import seaborn as sns;
 from collections import defaultdict
 
-
-
-
-
-import seaborn as sns;
+# User-made Modules
+from settings import Settings
 
 #the esp can be computed using old sensing plan formula
-
 #matplotlib.rcParams.update({'errorbar.capsize': 2})
-
-
-
 # Set the font to be serif, rather than sans
-
-
 sns.set(font='serif', rc={'figure.figsize':(20,8.27)})
 
 sns.set_context("paper")
@@ -47,13 +35,8 @@ sns.set_style("white", {
 })
 
 sns.set_style("ticks", {"xtick.major.size": 8, "ytick.major.size": 8})
-
-
 def entropy_calculation(prob_arry):
     return sum([x*np.log(1/x) for x in prob_arry])
-
-    
-
 
 class PostGraph(object):
     def __init__(self, sim_number, columns = ["sim_number", "sim_step", "veh_id", "edge_id", "speed"], dir_name=None):
@@ -75,8 +58,6 @@ class PostGraph(object):
         results.to_csv(filename, chunksize=1000)
         print(f"file saved complete to {filename}")
 
-
-
 class PostGraphGrid(object):
     def __init__(self, sim_number, columns = ["sim_number", "sim_step", "veh_id", "edge_id", "speed", "grid_id"]):
         self.df_list = []
@@ -90,7 +71,6 @@ class PostGraphGrid(object):
         print(f"file saving to: {filename}")
         pd.DataFrame(self.df_list, columns=self.columns).to_csv(filename, chunksize=1000)
         print(f"file saved complete to {filename}")
-
 
 class T_test(object):
 
@@ -114,8 +94,6 @@ class T_test(object):
         self.MoE = abs(t_val *std_avg * last_comp) #margin of error this is +- from diff mean to get range of 95% conf interval
         self.interval = [self.diff_mean - self.MoE, self.diff_mean + self.MoE]
 
-
-
 class DataCapture(object): #object per simulation
     def __init__(self, map_junctions, rowcol_to_junction):
         self.simulation_steps = 0
@@ -126,7 +104,6 @@ class DataCapture(object): #object per simulation
         self.reward_junction_ratio = None #ratio of total number of reward cells over total junctions
         self.setting=None
         self.sim_player_list = None
-
 
     def get_all_cells_visited(self, repeat=False, reward=False, total=False):
         player_coverage_list = []
@@ -156,11 +133,8 @@ class DataCapture(object): #object per simulation
             else:
                 return len(set(reward_total_list))
 
-
         return set(player_coverage_list)
         
-
-    #{node:{hit:#, players:[]}}
     def calculate_coverage(self, repeat=False): #road utilization amount of cells visited over all cells
         return (len(self.get_all_cells_visited(repeat))/self.map_junctions)*100
 
@@ -169,7 +143,6 @@ class DataCapture(object): #object per simulation
         reward_hit_number = 0
 
         #collected_sp_list need to contain node interms of grid
-
         for player in self.player_list:
             #print(f'player len node are {player.node_hit}')
             for node in player.collected_sp_list:
@@ -179,13 +152,11 @@ class DataCapture(object): #object per simulation
         print(f'coverage cells hit:{reward_hit_number}, total rewards cells:{len(self.reward_list)}')
         return (reward_hit_number/len(self.reward_list))*100
 
-
     def calculate_test_coverage_temp(self): #actually coverage amount rewarded cells visited over total reward cells
         reward_cell_visited = []
         reward_hit_number = 0
 
         #collected_sp_list need to contain node interms of grid
-
         for player in self.player_list:
             #print(f'player len node are {player.node_hit}')
             for node in player.collected_sp_list:
@@ -204,9 +175,7 @@ class DataCapture(object): #object per simulation
         avg_exp_steps = np.mean([x.expected_collection_steps for x in self.player_list])
         avg_actual_steps = np.mean([x.actual_collection_steps for x in self.player_list])
 
-
         tp_over_ecs = np.mean([(x.true_positive/(x.expected_collection_steps)) if x.expected_collection_steps != 0 else 0 for x in self.player_list])
-
 
         return [total_tp, total_tn, total_fp, total_fn, avg_random_steps, avg_exp_steps, avg_actual_steps, tp_over_ecs]
 
@@ -224,14 +193,8 @@ class DataCapture(object): #object per simulation
     def get_player_utilization(self):
         return (np.mean([len(set(x.node_hit)) for x in self.player_list]) / self.map_junctions) * 100
 
-
     def get_player_coverage(self):
         return (np.mean([len(set(x.collected_sp_list)) for x in self.player_list]) / len(self.reward_list)) * 100
-
-
-
-
-
 
 class MultiCapture(object): #object for multiple simulations
     def __init__(self, title):
@@ -240,15 +203,12 @@ class MultiCapture(object): #object for multiple simulations
         self.simulation_conv_list = []
         self.simulation_test_coverage = []
 
-
-
     def pickle_save(self, save_path):
         with open(save_path, 'wb') as config_dictionary_file:
             pickle.dump(self, config_dictionary_file)
         print('simulation saved success...')
 
     def pickle_load(self, save_path, directory=False, json_format=False):
-
 
         if directory:
             if json_format:
@@ -275,8 +235,6 @@ class MultiCapture(object): #object for multiple simulations
             else:
                 save_path = self.find_recent_sim(save_path)
 
-        #print('Loading from existing file... ', save_path)
-
         with open(save_path, 'rb') as config_dictionary_file:
             value = pickle.load(config_dictionary_file)
             return value
@@ -292,8 +250,6 @@ class MultiCapture(object): #object for multiple simulations
         if box_plot:
             return total_reward
         return sum(total_reward)/len(total_reward)
-
-        
 
     def average(self, box_plot=False, avg_player=False): #average for road util
         total = 0
@@ -312,11 +268,9 @@ class MultiCapture(object): #object for multiple simulations
             return self.simulation_test_coverage
         return total/len(self.simulation_test_coverage)
 
-
     def find_recent_sim(self, folder):
         file_list = glob.glob(os.path.join(folder, r'*.sim'))
         return max(file_list, key=os.path.getctime)
-
 
     def find_all_cov_cells(self,_iter =False):
         new_cov_test = []
@@ -348,12 +302,9 @@ class MultiCapture(object): #object for multiple simulations
             return [x.get_all_cells_visited(reward=True, total=total) for x in self.simulation_list]
 
         return np.mean([x.get_all_cells_visited(reward=True, total=total) for x in self.simulation_list])
-        
-        
 
     def get_average_result(self):
         return np.mean([x.get_average_results() for x in self.simulation_list], axis=0)
-
 
     def get_average_total_steps(self):
         return np.mean([x.simulation_steps for x in self.simulation_list])
@@ -371,16 +322,6 @@ class MultiCapture(object): #object for multiple simulations
             return [x.get_player_coverage() for x in self.simulation_list]
         return np.mean([x.get_player_coverage() for x in self.simulation_list])
 
-
-
-
-
-
-
-
-
-
-
 def plot_graph_folder(folder, x_interval,x_label,y_label): #plot the graph based on the mean of the simulation
     file_list = glob.glob(os.path.join(folder, r'*.sim'))
     file_list.sort(key=os.path.getctime)
@@ -396,7 +337,6 @@ def plot_graph_folder(folder, x_interval,x_label,y_label): #plot the graph based
     plt.ylabel(y_label)
     #plt.grid()
     plt.show()
-
 
 def plot_graph_multiple(folder, x_label, y_label, catogories): # x-axis number of simulation steps, y is the coverage, and multiple lines representing each capacity or budget value
     file_list = glob.glob(os.path.join(folder, r'*.sim'))
@@ -423,12 +363,7 @@ def autolabel(rects, ax):
                     textcoords="offset points",
                     ha='center', va='bottom')
 
-
-
-
 def plot_sd(folder, y_axis="ru"):
-
-
     label_order = ["dynamic", "static"]
 
     files = glob.glob(os.path.join(folder, r'*.sim'))
@@ -447,14 +382,12 @@ def plot_sd(folder, y_axis="ru"):
         temp_list = [sd_value, oldesp, coverage, utilization, average_utility] + result.tolist()
         df_list.append(temp_list)
 
-
     df = pd.DataFrame(df_list, columns=['SD_value','static_sp','rc','ru', "average_utility", 'tp', 'tn', 'fp', 'fn', 'rs', 'ecs', 'acs', 'tp_over_ecs'])
     #df_melt = pd.melt(df, id_vars=["SD_value", "static_sp"], value_vars=["rc", "ru"], var_name="metric", value_name="value")
     
     #print(df_melt)
     df["step_ratio"] = (df["tp"] / df['ecs'])
     print(df)
-
 
     #df = df[df.SD_value < 1]
 
@@ -472,14 +405,12 @@ def plot_sd(folder, y_axis="ru"):
     kw = {'color': ["red", "blue"], 'ls' : ["--","--"], "marker":["x", "o"]}
 
     df = df.sort_values(by=['SD_value']) #this is needed for the plt.plot with facetgrid works properly
-     
+    
     g = sns.FacetGrid(df, hue='static_sp', hue_kws=kw, legend_out=False)
     g.map(plt.plot, "SD_value", y_axis)
     g.map(plt.scatter, "SD_value", y_axis, alpha=0.7, linewidth=.1, edgecolor="white", s=1)
     
     g.add_legend(title="Algorithm", loc=0, ncol = 2,columnspacing=0.5, handletextpad=0, labelspacing=0, prop={'size':10}, borderpad=0, fancybox=True, framealpha=0, labels=label_order)
-
-
 
     ylabel = y_axis
     file_save = y_axis
@@ -508,17 +439,12 @@ def plot_sd(folder, y_axis="ru"):
     elif y_axis == "reward_visited":
         ylabel = "Average Crowdsourcers Visited"
 
-
-
     g.set(xlim=(min(xticks), max(xticks)), xticks=xticks, xlabel="Standard Deviation", ylabel=ylabel, ylim=(min(yticks)*0+0.98,max(yticks)*0 + 1))
     g.set(xscale="log")#, ylim=(3800, 4600))
     #plt.xscale('log')
 
-
     #for t, l in zip(g._legend.texts, label_order): t.set_text(l)
     plt.savefig(os.path.join(folder, file_save), dpi=300)
-
-
 
     plt.show()
 
@@ -552,7 +478,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
 
     folders = sorted([x for x in glob.glob(os.path.join(folder, r"*")) if os.path.isdir(x)], key=lambda x: int(x.split("\\")[-1]))
 
-
     for single_folder in folders:
         sort_dict = {}
         files = glob.glob(os.path.join(single_folder, r'*.sim'))
@@ -565,10 +490,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
         order_dict = [sort_dict[x] for x in sorted(sort_dict)]
 
         divided_list.append(order_dict)
-
-
-    
-
 
     for group in divided_list:
         base_rc = None
@@ -585,15 +506,12 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
             elif plot_values == "player":
                 identifier = obj.simulation_list[0].setting.car_numbers
 
-
             print("reward junction ration is ", obj.simulation_list[0].reward_junction_ratio)
-
 
             algo = obj.simulation_list[0].setting.game_theory_algorithm[obj.simulation_list[0].setting.current_algo_index]
             player_amount = obj.simulation_list[0].setting.car_numbers
             capacity_mean = obj.simulation_list[0].setting.player_capacity_random[0]
 
-            
             utilization = obj.average(box_plot=box_plot)
             #coverage = obj.average_coverage(box_plot=box_plot)
             #util_o_base = obj.average_util_over_base(box_plot=box_plot)
@@ -602,8 +520,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
             #average_utilization = obj.get_average_player_utilization(box_plot=box_plot)
             #average_coverage = obj.get_average_player_coverage(box_plot=box_plot)
             #reward_visited_total = obj.get_reward_visited(total=True, box_plot=box_plot)
-
-
 
             if not box_plot:
                 if normalize:
@@ -630,13 +546,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
                 zip_list = zip(*[identifier, algo, coverage, utilization, player_amount, cells, util_o_base, reward_visited, average_utility, capacity_mean, average_utilization, average_coverage, reward_visited_total])
                 for value in zip_list:
                     df_list.append(list(value))
-
-
-
-
-
-
-            
 
     df = pd.DataFrame(df_list, columns=[plot_values,'algo','rc','ru',"player_amount", "cells", "ru_over_base", "reward_visited", "average_utility", "capacity_mean", "average_utilization", "average_coverage", "reward_visited_total"])
 
@@ -666,12 +575,9 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
     elif y_axis == "reward_visited_total":
         ylabel = "Total Crowdsourcers Visited"
 
-
-
     if tTest:
         print(t_test_independent(divided_list, y_axis, plot_values,only_gta=True))
         exit()
-
 
     print(df)
 
@@ -705,9 +611,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
         if len(xticks) > 6:
             xticks = np.linspace(min(xticks), max(xticks) + 10, 6)
 
-
-
-
         kw = {'color':  color, 'ls' : ls, "marker": marker}
         if not combine_graph:
             print("single graph with not box plot")
@@ -717,7 +620,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
             g.set(xlabel=xlabel, ylabel=ylabel, xticks=xticks)
 
             g.add_legend(title="Algorithm", loc=0, ncol = 2,columnspacing=0.5, handletextpad=0, labelspacing=0, prop={'size':7}, borderpad=0, fancybox=True, framealpha=0, labels=label_order)
-            
 
         else:
             df = pd.melt(df, id_vars=[plot_values, "algo"], value_vars=["rc", "ru"], var_name="metric", value_name="value")
@@ -732,8 +634,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
                 ax.legend(title="Algorithm", loc=0, ncol = 2,columnspacing=0.5, handletextpad=0, labelspacing=0, prop={'size':8}, borderpad=0, fancybox=True, framealpha=0.5, labels=label_order)
                 ax.set_title("")
 
-        
-
         #g.add_legend(title="Algorithm", loc=0, ncol = 2,columnspacing=0.5, handletextpad=0, labelspacing=0, prop={'size':8}, borderpad=0, fancybox=True, framealpha=0.5, labels=label_order)
         
         #for t, l in zip(g._legend.texts, label_order): t.set_text(l)
@@ -743,7 +643,6 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
 
         plt.savefig(os.path.join(folder, f'{y_axis}.eps'), dpi=300)
         '''
-
         if len(xticks) > 6:
             xticks = np.linspace(min(xticks), max(xticks) + 10, 6)
 
@@ -758,9 +657,8 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
         g.map(plt.scatter, plot_values, y_axis, s=50, alpha=0.7, linewidth=.5, edgecolor="white")
         g.map(plt.plot, plot_values, y_axis)
 
-       #g._legend.set_title("Algorithm")
+        #g._legend.set_title("Algorithm")
         g.set(xlabel=xlabel, ylabel=ylabel, xticks=xticks)
-
 
         #for t, l in zip(g._legend.texts, label_order): t.set_text(l)
         '''
@@ -773,12 +671,7 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
             .add_legend(title="Algorithm") \
             .set(xlabel=xlabel, ylabel=ylabel)
 
-   
-
             for t, l in zip(g._legend.texts, label_order): t.set_text(l)
-
-
-
 
         elif horizontal:
             sns.violinplot(x="player",y=y_axis,hue='algo',data=df)
@@ -787,10 +680,9 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
             
             #sns.lineplot(x="player",y=y_axis,hue='algo',data=df, err_style="bars")
             ax = sns.pointplot(x="player", y=y_axis, hue="algo",
-                   data=df,
-                   markers=["o", "o", "o", "o"],
-                   linestyles=["--", "--", "--", "--"])
-
+                    data=df,
+                    markers=["o", "o", "o", "o"],
+                    linestyles=["--", "--", "--", "--"])
 
         else:
             if plot_values == "player":
@@ -809,12 +701,11 @@ def plot_others(folder, plot_values = "reward", y_axis="ru", box_plot=None, avg_
             .set(xlabel="Algorithm", ylabel=ylabel) 
 
             for ax in g.axes:
-               print(ax.get_title())
-               tit = ax.get_title().split(" = ")[1]
-               ax.set_title(f"{title}: {tit}")
-               for label in ax.get_xticklabels():
-                   label.set_rotation(30)
-
+                print(ax.get_title())
+                tit = ax.get_title().split(" = ")[1]
+                ax.set_title(f"{title}: {tit}")
+                for label in ax.get_xticklabels():
+                    label.set_rotation(30)
 
             plt.tight_layout()
             plt.savefig(os.path.join(folder, f'{y_axis}_box.eps'), dpi=300)
@@ -840,10 +731,7 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
 
     divided_list = [files]
 
-
     print(divided_list)
-    
-
 
     for group in divided_list:
 
@@ -877,14 +765,9 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
                 #identifier = int(os.path.basename(single_file).split("_")[0])
                 #print("im here", identifier)
 
-
-
-
-
             #print("im here outside ", identifier)
 
             #print("reward junction ration is ", obj.simulation_list[0].reward_junction_ratio)
-
 
             algo = obj.simulation_list[0].setting.current_running_algo #obj.simulation_list[0].setting.game_theory_algorithm[obj.simulation_list[0].setting.current_algo_index]
 
@@ -896,7 +779,6 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
             cells = obj.simulation_list[0].setting.max_memory_size
             capacity_mean = obj.simulation_list[0].setting.player_capacity_random[0]
 
-            
             utilization = obj.average(box_plot=box_plot)
             coverage = obj.average_coverage(box_plot=box_plot)
             temp_coverage = obj.average_coverage_temp(box_plot=box_plot)
@@ -907,8 +789,6 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
             #average_utilization = obj.get_average_player_utilization(box_plot=box_plot)
             #average_coverage = obj.get_average_player_coverage(box_plot=box_plot)
             #reward_visited_total = obj.get_reward_visited(total=True, box_plot=box_plot)
-
-
 
             if not box_plot:
                 if normalize:
@@ -942,18 +822,12 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
                 for value in zip_list:
                     df_list.append(list(value))
 
-
-
-
-
-
-            
     df = pd.DataFrame(df_list, columns=[plot_values,'algo','rc', 'ru',"player_amount", 'tc', 'rw'])
 
     #df = df.sort_values(by=[plot_values])
 
     #df.to_csv("testout.csv")
-   # df = pd.DataFrame(df_list, columns=[plot_values,'algo','rc','ru',"player_amount", "cells", "ru_over_base", "reward_visited", "average_utility", "capacity_mean", "average_utilization", "average_coverage", "reward_visited_total"])
+    # df = pd.DataFrame(df_list, columns=[plot_values,'algo','rc','ru',"player_amount", "cells", "ru_over_base", "reward_visited", "average_utility", "capacity_mean", "average_utilization", "average_coverage", "reward_visited_total"])
 
     '''
     Setting the aestheics of the graph
@@ -989,18 +863,14 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
     elif y_axis == "rw":
         ylabel = "Average utility gain"
 
-
-
     if tTest:
         print(t_test_independent(divided_list, y_axis, plot_values,only_gta=True))
         exit()
-
 
     print(df)
 
     xticks = sorted(set(list(df[plot_values])))
     '''
-
     from palettable.cubehelix import Cubehelix
     palette = Cubehelix.make(start=0.3, rotation=-0.5, n=16)
 
@@ -1030,9 +900,6 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
         if len(xticks) > 6:
             xticks = np.linspace(min(xticks), max(xticks) + 10, 6)
 
-
-
-
         #kw = {'color':  color, 'ls' : ls}#, "marker": marker}
         kw = {'color':  color, 'ls' : ls, "marker": marker}
         if not combine_graph:
@@ -1057,8 +924,6 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
                 ax.set_ylabel(get_convert(ax.get_title().split(" = ")[1]))
                 ax.legend(title="", loc=0, ncol = 2,columnspacing=0.5, handletextpad=0, labelspacing=0, prop={'size':8}, borderpad=0, fancybox=True, framealpha=0.5, labels=label_order)
                 ax.set_title("")
-
-        
 
         #g.add_legend(title="Algorithm", loc=0, ncol = 2,columnspacing=0.5, handletextpad=0, labelspacing=0, prop={'size':8}, borderpad=0, fancybox=True, framealpha=0.5, labels=label_order)
         
@@ -1085,7 +950,7 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
         g.map(plt.scatter, plot_values, y_axis, s=50, alpha=0.7, linewidth=.5, edgecolor="white")
         g.map(plt.plot, plot_values, y_axis)
 
-       #g._legend.set_title("Algorithm")
+        #g._legend.set_title("Algorithm")
         g.set(xlabel=xlabel, ylabel=ylabel, xticks=xticks)
 
 
@@ -1100,12 +965,7 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
             .add_legend(title="Algorithm") \
             .set(xlabel=xlabel, ylabel=ylabel)
 
-   
-
             for t, l in zip(g._legend.texts, label_order): t.set_text(l)
-
-
-
 
         elif horizontal:
             sns.violinplot(x="player",y=y_axis,hue='algo',data=df)
@@ -1114,9 +974,9 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
             
             #sns.lineplot(x="player",y=y_axis,hue='algo',data=df, err_style="bars")
             ax = sns.pointplot(x="player", y=y_axis, hue="algo",
-                   data=df,
-                   markers=["o", "o", "o", "o"],
-                   linestyles=["--", "--", "--", "--"])
+                    data=df,
+                    markers=["o", "o", "o", "o"],
+                    linestyles=["--", "--", "--", "--"])
 
 
         else:
@@ -1134,12 +994,10 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
             df.loc[df.algo=="greedy", "algo"] = "Greedy"
             order_tick = ["RANDOM", "GREEDY", "ATNE", "BASE"]
             
-
             g = sns.FacetGrid(data=df, col=box_plot, legend_out=False, col_wrap=2, sharey=False, sharex=False)
             g.map(sns.boxplot, "algo", y_axis,linewidth=0.5, palette="Set3")
             g.set(xlabel="Algorithm", ylabel=ylabel) 
             print("here again again")
-
             
             for i, ax in enumerate(g.axes):
                 print(ax.get_title())
@@ -1149,29 +1007,19 @@ def plot_others_graph(folder, plot_values = "reward", y_axis="ru", box_plot=None
                 for label in ax.get_xticklabels():
                     label.set_rotation(30)
             
-
             plt.tight_layout()
             plt.savefig(os.path.join(folder, f'{y_axis}_box.eps'), dpi=300)
             plt.savefig(os.path.join(folder, f'{y_axis}_box.png'))
             #plt.subplots_adjust(hspace=0.4, wspace=0.4)
-
     plt.show()
-
-
 
 def plot_result(folder, plot_values = "player", y_axis="tp"):
     order = ["base", "greedy", "gta", "random"]
-
-
     divided_list = []
-
     label_order = ["BaseLine", "Greedy", "ATNE", "Random"]
-
     folders = sorted([x for x in glob.glob(os.path.join(folder, r"*")) if os.path.isdir(x)], key=lambda x: int(x.split("\\")[-1]))
 
-    
     df_list = [] #algo, capacity, tp, tn, fp, fn, rs, ecs acs, steps
-
     if not folders:
         sort_dict = {}
         files = glob.glob(os.path.join(folder, r'*.sim'))
@@ -1186,8 +1034,6 @@ def plot_result(folder, plot_values = "player", y_axis="tp"):
         order_dict = [sort_dict[x] for x in sorted(sort_dict)]
 
         divided_list.append(order_dict)
-
-
 
     for single_folder in folders:
         sort_dict = {}
@@ -1218,7 +1064,6 @@ def plot_result(folder, plot_values = "player", y_axis="tp"):
             elif plot_values == "player":
                 identifier = obj.simulation_list[0].setting.car_numbers
 
-
             print(single_file)
 
             #cap = obj.simulation_list[0].setting.player_capacity_random[0]
@@ -1244,8 +1089,6 @@ def plot_result(folder, plot_values = "player", y_axis="tp"):
     elif plot_values == "cap":
         xlabel = "Capacity"
 
-
-
     ylabel = y_axis
     if y_axis == "tp":
         ylabel = "Average True Positives"
@@ -1255,14 +1098,11 @@ def plot_result(folder, plot_values = "player", y_axis="tp"):
     elif y_axis == "reward_visited":
         ylabel = "Average Crowdsourcers Visited"
 
-
     xticks = sorted(set(list(df[plot_values])))
-
 
     xticks = np.linspace(min(xticks), max(xticks) + 10, 6)
 
     marker = ["x", "o"]
-
 
     kw = {'color': ["blue", "purple", "red", "black"], 'ls' : ["--","--","--","--"], "marker":marker}
     g = sns.FacetGrid(df, hue='algo', hue_kws=kw, legend_out=False) \
@@ -1278,24 +1118,14 @@ def plot_result(folder, plot_values = "player", y_axis="tp"):
 
     plt.show()
 
-
-
-    
-
-
-
-
 def plot_result_graph(folder, plot_values = "player", y_axis="tp"):
     order = ["base", "greedy", "gta", "random"]
-
 
     divided_list = []
 
     label_order = ["BaseLine", "Greedy", "ATNE", "Random"]
 
-    
     df_list = [] #algo, capacity, tp, tn, fp, fn, rs, ecs acs, steps
-
 
     sort_dict = {}
     files = glob.glob(os.path.join(folder, r'*.sim'))
@@ -1310,10 +1140,6 @@ def plot_result_graph(folder, plot_values = "player", y_axis="tp"):
     order_dict = [sort_dict[x] for x in sorted(sort_dict)]
 
     divided_list.append(order_dict)
-
-
-
- 
 
     print(divided_list)
 
@@ -1330,7 +1156,6 @@ def plot_result_graph(folder, plot_values = "player", y_axis="tp"):
                 identifier = obj.simulation_list[0].setting.player_capacity_random[0]
             elif plot_values == "player":
                 identifier = obj.simulation_list[0].setting.car_numbers
-
 
             print(single_file)
 
@@ -1355,8 +1180,6 @@ def plot_result_graph(folder, plot_values = "player", y_axis="tp"):
     elif plot_values == "cap":
         xlabel = "Capacity"
 
-
-
     ylabel = y_axis
     if y_axis == "tp":
         ylabel = "Average True Positives"
@@ -1366,14 +1189,11 @@ def plot_result_graph(folder, plot_values = "player", y_axis="tp"):
     elif y_axis == "reward_visited":
         ylabel = "Average Crowdsourcers Visited"
 
-
     xticks = sorted(set(list(df[plot_values])))
-
 
     xticks = np.linspace(min(xticks), max(xticks) + 10, 6)
 
     marker = ["x", "o"]
-
 
     kw = {'color': ["blue", "purple", "red", "black"], 'ls' : ["--","--","--","--"], "marker":marker}
     g = sns.FacetGrid(df, hue='algo', hue_kws=kw, legend_out=False) \
@@ -1389,10 +1209,7 @@ def plot_result_graph(folder, plot_values = "player", y_axis="tp"):
 
     plt.show()
 
-
-
 def t_test_independent(files, y_axis, plot_values, only_gta=False):
-
 
     t_test_result_dict = {}
     summary_dict = {}
@@ -1416,20 +1233,13 @@ def t_test_independent(files, y_axis, plot_values, only_gta=False):
             elif y_axis == "average_utility":
                 test_obj = T_test(sim_obj1.average_reward(box_plot=True), sim_obj2.average_reward(box_plot=True))
             elif y_axis == "reward_visited_total":
-               test_obj = T_test(sim_obj1.get_reward_visited(total=True, box_plot=True), sim_obj2.get_reward_visited(total=True,box_plot=True))
-
-
-
+                test_obj = T_test(sim_obj1.get_reward_visited(total=True, box_plot=True), sim_obj2.get_reward_visited(total=True,box_plot=True))
 
             #sim_obj1 = MultiCapture('test').pickle_load(comb[0], directory=False).average_reward(True) #utility
             #sim_obj2 = MultiCapture('test').pickle_load(comb[1], directory=False).average_reward(True)
 
-            
-    
             #assert comb[0].split("_")[-5] == comb[1].split("_")[-5], f"{comb[0].split('_')[-5]} != {comb[1].split('_')[-5]}"
 
-
-            
             algo_1 = sim_obj1.simulation_list[0].setting.game_theory_algorithm[sim_obj1.simulation_list[0].setting.current_algo_index]
             algo_2 = sim_obj2.simulation_list[0].setting.game_theory_algorithm[sim_obj2.simulation_list[0].setting.current_algo_index]
 
@@ -1440,14 +1250,11 @@ def t_test_independent(files, y_axis, plot_values, only_gta=False):
 
             key = f"{algo_1}_{algo_2}_{player_amount}"
 
-
-
             t_test_result_dict[key] = test_obj
     if only_gta:
         return {key:value for key, value in t_test_result_dict.items() if "gta" in key}
         
     return t_test_result_dict
-
 
     #the t value shows the difference and p value shows the significance of that difference, you want it to be <0.05 to accept the hypothesis
 
@@ -1472,10 +1279,10 @@ def generate_weighted_graph(sumo_cfg):
     max_time = 0
 
     for junct_id, junct_obj in env_map.junctions.items():
-         route_obj = env_map.find_best_route(junct_id, destination)
-         if not route_obj:
+        route_obj = env_map.find_best_route(junct_id, destination)
+        if not route_obj:
             print("no travel time ", junct_id)
-         else:
+        else:
             #weight_dict[junct_id] = math.exp(-0.5 *(route_obj.travelTime**2))
             #print(route_obj)
             #exit()
@@ -1483,15 +1290,10 @@ def generate_weighted_graph(sumo_cfg):
             if route_obj.travelTime > max_time:
                 max_time = route_obj.travelTime
 
-
     for key, value in weight_dict.copy().items():
         weight_dict[key] = math.exp(-0.5 *((value/max_time)**2))
 
     return weight_dict
-
-
-
-
 
 def plot_time_series(folder, plot_values = "sim", y_axis="rc"):
 
@@ -1507,10 +1309,7 @@ def plot_time_series(folder, plot_values = "sim", y_axis="rc"):
 
     divided_list = [files]
 
-
     print(divided_list)
-
-
 
     if y_axis=="poi":
 
@@ -1525,8 +1324,6 @@ def plot_time_series(folder, plot_values = "sim", y_axis="rc"):
                 obj = MultiCapture('test').pickle_load(single_file, directory=False) 
                 print(obj.simulation_list[0].poi_visited_instance)
 
-
-
                 for i, sim_number in enumerate(obj.simulation_list):
 
                     algo = sim_number.setting.current_running_algo
@@ -1539,8 +1336,6 @@ def plot_time_series(folder, plot_values = "sim", y_axis="rc"):
 
         df = pd.DataFrame(df_list, columns=['algo',  'sim_number', 'step','poi'])
 
-
-    
     elif y_axis == "rc" or y_axis=="rw":
 
         for group in divided_list:
@@ -1553,7 +1348,6 @@ def plot_time_series(folder, plot_values = "sim", y_axis="rc"):
                 print("procssing ", os.path.basename(single_file))
                 obj = MultiCapture('test').pickle_load(single_file, directory=False) 
                 #print(obj.simulation_list[0].rc_visited_instance)
-
 
                 #print("temp coverage ", obj.simulation_list[0].get_avg_temp_coverage())
                 for i, sim_number in enumerate(obj.simulation_list):
@@ -1576,27 +1370,19 @@ def plot_time_series(folder, plot_values = "sim", y_axis="rc"):
 
                             df_list.append([algo, i, step, cov])
 
-
         df = pd.DataFrame(df_list, columns=['algo',  'sim_number', 'step',y_axis])
-
-
-
 
         #df = df[df['algo']!="RANDOM"]
 
         #exit()
-
-    
 
     df = df.groupby(['algo', 'step']).mean().reset_index()
     df = df[df["algo"] != "base"]
 
     print(df[df["algo"]=="BASE"])
 
-
     marker = ["o", "^", "s", "x"]
-   # xticks = np.linspace(min(xticks), max(xticks) + 10, 6)
-
+    # xticks = np.linspace(min(xticks), max(xticks) + 10, 6)
 
     kw = {'color': ["purple", "red", "black", "black"], 'ls' : ["--","-.",":"]}#, "marker":marker}
     g = sns.FacetGrid(df, hue='algo', hue_kws=kw, legend_out=False)
@@ -1612,10 +1398,6 @@ def plot_time_series(folder, plot_values = "sim", y_axis="rc"):
 
     plt.show()
 
-
-
-
-
 class DataCaptureGraph(DataCapture): #object per simulation
     def __init__(self, map_junctions=None, rowcol_to_junction=None):
         super(DataCaptureGraph, self).__init__(map_junctions=map_junctions, rowcol_to_junction=rowcol_to_junction)
@@ -1624,8 +1406,6 @@ class DataCaptureGraph(DataCapture): #object per simulation
         self.rc_visited_instance = {} #step, 
         self.rw_visited_instance = {}
         self.temp_coverage = defaultdict(list) #poi:[]
-
-
 
     def calculate_test_coverage(self, custom_player_list=None): #actually coverage amount rewarded cells visited over total reward cells
         #crowsourcer coverage
@@ -1637,7 +1417,6 @@ class DataCaptureGraph(DataCapture): #object per simulation
         else:
             temp_player_list = self.player_list
 
-
         for player in temp_player_list:
             #print(f'player len node are {player.node_hit}')
             for node in player.collected_sp_list:
@@ -1646,11 +1425,8 @@ class DataCaptureGraph(DataCapture): #object per simulation
                 else:
                     reward_cell_visited[node] = 1
 
-
         #print(f'coverage cells hit:{reward_hit_number}, total rewards cells:{len(self.reward_list)}')
         return (len(reward_cell_visited)/len(self.reward_list))*100
-
-
 
     def get_all_cells_visited(self, repeat=False, reward=False, total=False):
         edge_junct_visited = {}
@@ -1682,13 +1458,9 @@ class DataCaptureGraph(DataCapture): #object per simulation
         prob_dist_dict = {key:entropy_calculation(np.diff(value_list)/np.sum(np.diff(value_list))) for key, value_list in self.temp_coverage.items()}
         return (sum(prob_dist_dict.values())/len(self.reward_list)) #dictionary contains the probabilty ditribtuion for every poi, first get the gap between simulation steps, then calculate the probabily for the gaps might need softmax
 
-
-
-
 class MultiCaptureGraph(MultiCapture):
     def __init__(self, title=None):
         super(MultiCaptureGraph, self).__init__(title=title)
-
 
     def average(self, box_plot=False, avg_player=False): #average for road util
         list_ru = [(sim.get_all_cells_visited() / sim.map_junctions)*100 for sim in self.simulation_list]
@@ -1715,15 +1487,12 @@ class MultiCaptureGraph(MultiCapture):
             return list_tc
         return np.mean(list_tc)
 
-
-
 if __name__== "__main__":
 
     parser = argparse.ArgumentParser(description="NSF simulation RESULTS")
     #parser.add_argument("--option", type=str, default="player", help="define what changes for simulation player / capacity ")#--means optional args no -- means positional
     parser.add_argument("--option", type=str, default="plot", help="define plot or json")
     args = parser.parse_args()
-
 
     if args.option == "json":
         obj = MultiCapture('test').pickle_load(os.path.join(Settings.sim_save_path_graph, 'json_folder'), directory=True, json_format=True) # for converting json
@@ -1738,11 +1507,6 @@ if __name__== "__main__":
 
         #plot_result_graph(os.path.join(Settings.sim_save_path_graph, "timeseries"), plot_values="player", y_axis = "ru")
 
-
-
         plot_others_graph(os.path.join(Settings.sim_save_path_graph, "inc_cap_multiple"), plot_values="cap", y_axis="rw", box_plot="cap", avg_player=False, horizontal=False, scatter=False, tTest=False, error_bar=False, save=True, normalize=False, combine_graph=False, ylim=None)
 
         #plot_time_series(os.path.join(Settings.sim_save_path_graph, "fiftest"), y_axis="rw")
-
-
-

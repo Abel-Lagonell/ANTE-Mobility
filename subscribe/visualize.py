@@ -1,9 +1,11 @@
+# Online Modules
 import traci
 import traci.constants as tc
 import math
-from settings import GraphSetting
-
 import numpy as np
+
+#User-made Modules
+from settings import GraphSetting
 from util import *
 
 class Visualize(object):
@@ -35,11 +37,9 @@ class Visualize(object):
 		traci.polygon.add(polyid, shape, color, fill=False, layer=9)
 		return polyid
 
-
 	def polygon(self, point, color, size):
 		x,y = point
 		polyid = f"poly_{len(traci.polygon.getIDList())+1+self.deleted_number}"
-		#print("making polygon ", polyid)
 		shape = [(x-size, y-size),(x-size, y+size),(x+size, y+size),(x+size, y-size)]
 		traci.polygon.add(polyid, shape, color, fill=True, layer=9)
 
@@ -47,12 +47,8 @@ class Visualize(object):
 		data = self.step_object.sim_env.veh_data
 		if data:
 			for veh_id, veh_value in data.items():
-				#print(f"{veh_id} position is {veh_value[tc.VAR_POSITION]}")
 				self.polygon(veh_value[tc.VAR_POSITION], (249,56,34), 5)
 		
-
-
-
 		if self.step_object.sim_env.track_veh:
 			self.none_tick = 0
 			print("Currently Tracking ", self.step_object.sim_env.track_veh)
@@ -65,19 +61,12 @@ class Visualize(object):
 		else:
 			self.none_tick +=1
 
-			#if self.none_tick == 50: #this is for when view zooms out 
-			#	traci.gui.setZoom(traci.gui.DEFAULT_VIEW, self.default_zoom)
-
-
 	def show(self):
 		self.show_trace()
-		#self.show_winners()
 
 	def draw_poi(self):
 		for poi_key, poi_obj in self.step_object.sim_env.map_data.pois.items():
 			self.polygon(traci.junction.getPosition(poi_obj.junction), (255,0,255,255), 30)
-
-
 
 	def show_winners(self):
 		for algo in self.step_object.algo_list:
@@ -94,15 +83,6 @@ class Visualize(object):
 						id_value = self.circle((winner.pos_x, winner.pos_y), GraphSetting.gia_radius, color=(0,0,255,255))
 
 					algo.prev_winner_poly.append(id_value)
-				#mc = MonteCarlo(traci.gui.getBoundary(), algo.winners)
-
-
-
-			
-
-
-
-
 
 	def define_background(self, color):
 		ll,ur = traci.gui.getBoundary() #return lower left and upper right coords
@@ -116,9 +96,3 @@ class Visualize(object):
 		polyid = f"poly_{len(traci.polygon.getIDList())+1}"
 		shape = [(ulx, uly),(llx, lly),(lrx, lry),(urx, ury)]
 		traci.polygon.add(polyid, shape, color, fill=True, layer=1)
-
-
-
-
-		
-

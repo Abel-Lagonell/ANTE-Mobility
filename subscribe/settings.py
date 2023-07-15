@@ -1,5 +1,10 @@
+# THIS FILE IS TO KEEP SIMULATIONS THE SAME
+
+#Online Modules
 import os,sys,glob
 import json
+
+#User-made Modules
 sys.path.append("./../GIA")
 from GIA import *
 
@@ -40,7 +45,6 @@ class Settings(object):
 			self.player_capacity_random = (30, 5) #mean,std for capacity
 			self.reward_value_random = (50, 10) #mean, std for reward
 			
-			
 			self.reward_amount = 400
 			self.reward_position_std = 10
 
@@ -53,33 +57,6 @@ class Settings(object):
 			self.current_algo_index = 0 #track current algorithm thats running
 			self.player_cost_sd = 1
 			self.reward_mean_cost = [20, 20]
-			'''
-			self.car_numbers = 200 #set the random amount to spawn when no prev defined cars
-			self.simulation_delay = 0 #delay for visualization, 0 runs fast
-			self.game_theory_algorithm = ['random', 'base'] #gta, greedy, base, random
-			#self.game_theory_algorithm = ["greedy", "random"]
-			#self.game_theory_algorithm = ['base']
-			self.destination = '0_2' #'random' #set to 0 row and 0 column, can be set to 'random'
-			self.theta_random = 8000  #used in softmax to determine prob, higher this value the less random it is
-			self.simulation_steps = 50 #how many times to repeat simulation
-
-			self.player_capacity_random = (70, 1) #mean,std for capacity
-			self.reward_value_random = (50, 1) #mean, std for reward
-			
-			
-			self.reward_amount = 400
-			self.reward_position_std = 10
-
-			self.percent_reward_dist = None #can choose percentage of total cells in the cluster that will contain reward
-
-			self.max_memory_size = 3 #3 conseqtive. how many max nodes store in player memory, these cells are not in the reward consideration list
-			#thus when cells is NONE resort to weighted random which uses the gloabal cov cells to determine which weight to choose
-			#uniform distribtuion
-
-			self.current_algo_index = 0 #track current algorithm thats running
-			self.player_cost_sd = 1
-			self.reward_mean_cost = [2, 5]
-			'''
 		else:
 
 			self.car_numbers = 10  #set the random amount to spawn when no prev defined cars
@@ -103,14 +80,12 @@ class Settings(object):
 			self.max_memory_size = 3 #3 conseqtive. how many max nodes store in player memory, these cells are not in the reward consideration list
 			#thus when cells is NONE resort to weighted random which uses the gloabal cov cells to determine which weight to choose
 
-
 			self.current_algo_index = 0 #track current algorithm thats running
 			self.player_cost_sd = 1
 
 			self.reward_mean_cost = [2, 5]
 
 #minimize repeating nodes
-
 class GraphSetting(Settings):
 	def __init__(self):
 
@@ -122,8 +97,8 @@ class GraphSetting(Settings):
 
 		self.theta_random = 120 #200
 		self.destination='cell0_2'
-		self.distance_capacity = [7,7]#he limit the player can travel within the. 2 to 3 times the cost from start to end 
-		#this multipliar can be determined based on how far the veh is to their destination. the rate of reduction is changed as veh is approaching their destination
+		self.distance_capacity = [7,7] #The limit the player can travel within the. 2 to 3 times the cost from start to end 
+		#this multiplier can be determined based on how far the veh is to their destination. the rate of reduction is changed as veh is approaching their destination
 		#this gas capacity takes priority over the utility and sensing plan, means if we have capacity left the vehicle still wont collect
 
 		self.player_reward_random = (1000, 5)
@@ -136,7 +111,6 @@ class GraphSetting(Settings):
 
 		self.chance_to_dest = 0.1
 
-
 		self.poi_limit = 0 #the most number times a poi can be visited 0 means it can visit infinite times. usually 0 
 
 		self.poi_consider = 1 #percentage of total poi to consider for weighted random
@@ -147,13 +121,5 @@ class GraphSetting(Settings):
 
 		self.current_running_algo = None
 
-
-
-
-
-
-
-
 if __name__ == "__main__":
 	pass
-
