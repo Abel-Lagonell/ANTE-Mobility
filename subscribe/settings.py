@@ -38,7 +38,7 @@ class Settings(object):
 			#self.game_theory_algorithm = ['gta', 'greedy','random', 'base'] #gta, greedy, base, random
 			#self.game_theory_algorithm = ["greedy", "random"]
 			#self.game_theory_algorithm = ['base']
-			self.destination = '0_2' #'random' #set to 0 row and 0 column, can be set to 'random'
+			self.destination = 'random' #'0_2'  #set to 0 row and 0 column (0_2) , can be set to 'random'
 			self.theta_random = 200000  #used in softmax to determine prob, higher this value the less random it is
 			self.simulation_steps = 10 #how many times to repeat simulation
 
@@ -96,7 +96,7 @@ class GraphSetting(Settings):
 		#destination = "random"#"cell0_2"
 
 		self.theta_random = 120 #200
-		self.destination='cell0_2'
+		self.destination='random'
 		self.distance_capacity = [7,7] #The limit the player can travel within the. 2 to 3 times the cost from start to end 
 		#this multiplier can be determined based on how far the veh is to their destination. the rate of reduction is changed as veh is approaching their destination
 		#this gas capacity takes priority over the utility and sensing plan, means if we have capacity left the vehicle still wont collect

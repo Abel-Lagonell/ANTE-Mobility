@@ -810,7 +810,7 @@ class Environment(object):
 				route_index += 1
 			except IndexError:
 				#because the stopping edge is determined before rerouting to he next poi, the route index might be out of range because its reached the poi and dk where to go
-				#print(f"oh well im out of index trying to stop {veh_id} at {poi_key} starting {start_edge} index {start_index}")
+				print(f"oh well im out of index trying to stop {veh_id} at {poi_key} starting {start_edge} index {start_index}")
 				#print(f"Routes: {routes}")
 				#exit()
 
