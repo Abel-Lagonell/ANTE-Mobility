@@ -9,6 +9,7 @@ The repository includes:
 * Street Discretization
 
 ## Getting Started
+### Original 
 Download SUMO from [HERE](https://sumo.dlr.de/docs/Downloads.php) and set up system environment variable.
 
 pip install dependencies
@@ -21,6 +22,25 @@ start sample simulation
 ```
 python main.py
 ```
+### Updated Instructions
+This shows the ubuntu commands that need to be done in order for a smooth installation
+
+1  : Install Latest Ubuntu VM
+2  : ```sudo apt update```
+     ```sudo apt upgrade```
+3  : ```sudo apt install pip```
+4  : ```mkdir GitHub```
+5  : ```cd GitHub/```
+6  : ```sudo add-apt-repository ppa:sumo/stable```
+     ```sudo apt-get update```
+     ```sudo apt-get install sumo sumo-tools sumo-doc```
+7  : ```git clone [repository]```
+8  : ```cd ANTE-Mobility/```
+9  : ```pip freeze > requirements.txt```
+     ```pip install -r requirements.txt```
+     ```sudo apt install libcairo2-dev pkg-config python3-dev```
+     ```pip install traci matplotlib pandas scipy seaborn scikit-learn dill```
+10 : for stable build switch the setting destination to cell0_2 for experimental release change it to random
 
 ## Experiement Design
 
