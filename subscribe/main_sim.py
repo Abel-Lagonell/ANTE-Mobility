@@ -265,12 +265,12 @@ def run_sim():
 
 	logging.basicConfig(filename=os.path.join(dir_name, 'output.log'), filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-	increase_cap(10, 20, 10, dir_name)
+	#increase_cap(10, 20, 10, dir_name)
 	#inc_distance_cap(1, 11, 2, dir_name)
 	#increase_player(10, 20, 10, dir_name)
 	#increase_sp([1, 5, 10, 30, 70, 100, 200], dir_name)
 	#inc_random_theta(10, 290, 50, dir_name)
-	#inc_poi_radius(10, 110, 20, dir_name)
+	inc_poi_radius(10, 110, 20, dir_name)
 	#inc_buffer_interval(10, 110, 20, dir_name)
 	#inc_buffer_poi(10, 110, 20, dir_name)
 

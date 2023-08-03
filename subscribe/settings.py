@@ -96,7 +96,7 @@ class GraphSetting(Settings):
 		#destination = "random"#"cell0_2"
 
 		self.theta_random = 120 #200
-		self.destination='random'
+		self.destination='cell0_2'#'random'
 		self.distance_capacity = [7,7] #The limit the player can travel within the. 2 to 3 times the cost from start to end 
 		#this multiplier can be determined based on how far the veh is to their destination. the rate of reduction is changed as veh is approaching their destination
 		#this gas capacity takes priority over the utility and sensing plan, means if we have capacity left the vehicle still wont collect

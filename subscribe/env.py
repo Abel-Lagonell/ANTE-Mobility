@@ -20,10 +20,10 @@ import logging
 import copy
 from math import exp
 import sys, os
-from sklearn import preprocessing 
+from sklearn import preprocessing
 
 #User-made Modules
-sys.path.append("./poibin-master")
+sys.path.append("../poibin-master")
 from util import *
 from poibin import PoiBin
 from postprocess import DataCaptureGraph
@@ -801,7 +801,9 @@ class Environment(object):
 		route_index = traci.vehicle.getRouteIndex(veh_id)
 		start_edge = routes[route_index]
 		start_index = route_index
+		i = 0
 		while True:
+			i = i+1
 			try:
 				traci.vehicle.setStop(veh_id, routes[route_index])
 				break
@@ -814,7 +816,11 @@ class Environment(object):
 				#print(f"Routes: {routes}")
 				#exit()
 
-				routes = self.map_data.find_route_reroute(start_edge, self.GraphSetting.destination).edges
+				if self.GraphSetting.destination != "random":
+					routes = self.map_data.find_route_reroute(start_edge, self.GraphSetting.destination).edges
+				else:
+					print("Index Error:", i)
+					routes = self.map_data.find_route_reroute(start_edge, self.player_list[veh_id].dest_junc).edges
 				route_index = 0
 				traci.vehicle.setRoute(veh_id,routes)
 
