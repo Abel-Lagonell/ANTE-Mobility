@@ -9,6 +9,7 @@ import datetime, logging
 import copy, traceback
 from random import choice
 from optparse import OptionParser
+import multiprocessing
 
 #User-made Modules
 sys.path.append("./../")
@@ -23,106 +24,113 @@ from util import *
 # This file will take a lot from main_sim.py for the structure of the code and how it is going to be used.
 # For the sake of simplicity this file will also not have a GUI component made
 
-#Single Simulation
-def start_simulation(Env, sim_number, _seed=None, setting_obj=None, dir_name=None, main_env=None, new_players=False):
-    traci.start(["sumo", "-c", Settings.sumo_config])
+#Start Simulation and connect it to an object
+def start_simulation(Env, sim_number, _seed=None, setting_obj=None, dir_name=None, main_env=None, new_players=False, label="default"):
+    traci.start(["sumo", "-c", Settings.sumo_config], label=label )
     env = Env(sim_number=sim_number, _seed=_seed, setting_obj=setting_obj, main_env=main_env, new_players=new_players)
-    conn = traci.getConnection(label="default")
+    conn = traci.getConnection(label=label)
 
-    return conn, env
+    while True:
+        conn.simulationStep()
+        conn.addStepListener(env)
+        if  env.break_condition:
+            break
 
-def base_run(Env, setting_obj=None,dir_name=None, file_title=None):
-    _seed =3
+    print("veh successfully arrived ", env.sim_env.success_veh)
 
-    #File System Handler
-    post_process = PostGraph(file_title, columns=["sim_number", "simstep", "veh_id", "edge_id", "speed", "capacity", "budget", "prev_poi","algo"], dir_name=dir_name)
+    return env.post_process, env
 
-    #Global MultiCapture
-    multi_cap = MultiCaptureGraph("capture")
-
-    try:
-        temp_conn, env = start_simulation(Env, 1, _seed, setting_obj, dir_name)
-        while True:
-            temp = step_sim(temp_conn, env)
-            if temp: break
-
-        post_process.df_list = post_process.df_list + env.post_process.df_list
-        logging.info(f'SUCCESS FINISHED simulation {sim_number}')
-
-        env.sim_env.post_process_graph.setting = env.sim_env.GraphSetting
-        multi_cap.simulation_list.append(env.sim_env.post_process_graph)
-
-    except traci.exceptions.TraCIException as e:
-        logging.info(f"Failed simulation {sim_number} {str(e)}")
-        traci.close()
-
-    multi_cap.pickle_save(os.path.join(dir_name, f'{file_title}.sim'))
-    post_process.to_csv()
-    traci.close()
-
-    return env
-
-#Multi Simulation Handler
-def run(number=1, EnvL=[EnvironmentListener], setting_obj=None, file_title=[str], dir_name=None, main_env=None):
+#Single Simulation Processor
+def run(number=1, Env=EnvironmentListener, setting_obj=None, file_title=[str], dir_name=None, main_env=None, label="default", new_players=False):
 #number = Number of simulations, EnvL= Enviroments to be run, setting_obj= The Base settings of the simulation, dir_name= storage directory
     _seed = 3
 
-    bool_list=[bool]
-    conn_list=[]
-    env_list=[]
-
-
     #Global MultiCapture
     multi_cap = MultiCaptureGraph("capture")
 
+    #Processor
+    post_process = PostGraph(file_title, columns=["sim_number", "sim_step", "veh_id", "edge_id", "speed", "capacity", "budget", "prev_poi", "algo"], dir_name=dir_name)
+
     sim_number=1
 
-    main_env = base_run(BaseEnv, setting_obj=setting_obj, file_title=file_title.pop(0), dir_name=None)
-
     while sim_number <= number:
-
         try:
-            for env_sim in Env:
-                conn, env = start_simulation(Env, sim_number, _seed=_seed, setting_obj=setting_obj, dir_name=dir_name, new_players=new_players, main_env =main_env)
-                conn_list.append(conn)
-                env_list.append(env)
-                bool_list.append(False)
+            temp_process, env = start_simulation(Env, sim_number, _seed, setting_obj, dir_name, main_env, new_players, label)
 
-            while all(bool_list):
-                for i in len(conn_list):
-                    bool_list[i] = step_sim(conn_list[i], env_list[i])
-
-            for i in len(env_list):
-                #File System Handler
-                post_process = PostGraph(file_title, columns=["sim_number", "simstep", "veh_id", "edge_id", "speed", "capacity", "budget", "prev_poi"], dir_name=dir_name)
-                post_process.df_list = post_process.df_list + env.post_process.df_list
-                env.sim_env.post_process_graph.setting = env.sim_env.GraphSetting
-                multi_cap.simulation_list.append(env.sim_env.post_process_graph)
-
+            post_process.df_list = post_process.df_list + temp_process.df_list
             logging.info(f'SUCCESS FINISHED simulation {sim_number}')
-            sim_number+= 1
+
+            sim_number += 1
+
+            env.sim_env.post_process_graph.setting = env.sim_env.GraphSetting
+            multi_cap.simulation_list.append(env.sim_env.post_process_graph)
 
         except traci.exceptions.TraCIException as e:
-            logging.info(f"Failed simulation {sim_number} {str(e)}")
-            traci.close()
+            logging.info(f"FAILED simulation {sim_number} {str(e)}")
 
-def step_sim(conn_obj, env_obj):
-    if env.break_condition:
-        return True
-    conn_obj.simulationStep()
-    conn_obj.addStepListener(env_obj)
-    if env.break_condition:
-        return True
+    multi_cap.pickle_save(os.path.join(dir_name, f'{file_title}.sim'))
+    post_process.to_csv()
+
+    return env
+
+def kesselrun(start:int, end:int, inc:int, dir_name=None):
+    main_env = None
+    global_poi = None
+    for i in range (start, end+inc, inc):
+        mySetting = GraphSetting()
+        mySetting.car_numbers = i
+
+        if not main_env:
+            main_env = run(1, BaseEnv, mySetting, f"{mySetting.car_numbers}_BASE", dir_name, main_env, f"{i}_BASE")
+            global_poi = main_env.global_poi
+        else:
+            main_env.GraphSetting = mySetting
+            main_env = run(1, BaseEnv, mySetting, f"{mySetting.car_numbers}_BASE", dir_name, main_env, f"{i}_BASE", True)
+            main_env.global_poi = global_poi
+
+        p1 = multiprocessing.Process(target = run, args = (1, EnvironmentListener, mySetting, f"{mySetting.car_numbers}_ANTE", dir_name, main_env, f"{i}_ANTE"))
+        p2 = multiprocessing.Process(target = run, args = (1, RandomEnv, mySetting, f"{mySetting.car_numbers}_RAND", dir_name, main_env, f"{i}_RAND"))
+        p3 = multiprocessing.Process(target = run, args = (1, GreedyEnv, mySetting, f"{mySetting.car_numbers}_GREE", dir_name, main_env, f"{i}_GREEDY"))
+
+        p1.start()
+        p2.start()
+        p3.start()
+
+        p1.join()
+        p2.join()
+        p3.join()
+
+def inc_cap(start:int, end:int, inc:int, dir_name=None): #Changing the storage capacity of the players
+    main_env=None
+
+    for i in range (start, end+inc, inc):
+        mySetting = GraphSetting()
+        mySetting.player_capacity_random = (i, mySetting.player_capacity_random[1])
+
+        if not main_env:
+            main_env=run(1, BaseEnv, mySetting, f"{mySetting.player_capacity_random[0]}_BASE", dir_name, main_env, f"{mySetting.player_capacity_random[0]}_BASE")
+        else:
+            main_env.GraphSetting = mySetting
+            main_env.change_capacity()
+            run(1, BaseEnv, mySetting, f"{mySetting.player_capacity_random[0]}_BASE", dir_name, main_env, f"{mySetting.player_capacity_random[0]}_BASE")
+
+
+        p1 = multiprocessing.Process(target = run, args =(1, EnvironmentListener, mySetting, f"{mySetting.player_capacity_random[0]}_ANTE", dir_name, main_env, f"{mySetting.player_capacity_random[0]}_ANTE"))
+        p2 = multiprocessing.Process(target = run, args =(1, RandomEnv, mySetting, f"{mySetting.player_capacity_random[0]}_RAND", dir_name, main_env, f"{mySetting.player_capacity_random[0]}_RAND"))
+        p3 = multiprocessing.Process(target = run, args =(1, GreedyEnv, mySetting, f"{mySetting.player_capacity_random[0]}_GREE", dir_name, main_env, f"{mySetting.player_capacity_random[0]}_GREE"))
+        p1.start()
+        p2.start()
+        p3.start()
+
+    main_env.reward_to_json(dir_name)
 
 if __name__ == '__main__':
-    mySetting = GraphSetting()
-    mySetting.car_numbers = 10
-    file_title = ["10_BASE","10_ANTE","10_GREEDY","10_RANDOM"]
-    Env = [EnvironmentListener, GreedyEnv, RandomEnv]
-
     dt = datetime.datetime.utcnow().timestamp()
     dir_name = os.path.join(Settings.sim_save_path_graph, str(dt))
     os.mkdir(dir_name)
-    logging.basicConfig(filename=os.path.join(dir_name, 'output.log'), filemode = 'w',format='%(acstime)s - %(name)s  - %(levelname)s - %(message)s', level=logging.INFO)
+    print("making dir ", dir_name)
 
-    run(EnvL=Env,setting_obj=mySetting, number =1, file_title=file_title, dir_name = dir_name)
+    logging.basicConfig(filename=os.path.join(dir_name, 'output.log'), filemode = 'w',format='%(asctime)s - %(name)s  - %(levelname)s - %(message)s', level=logging.INFO)
+
+    #kesselrun(5, 10, 5, dir_name)
+    inc_cap(10, 90, 20, dir_name)
