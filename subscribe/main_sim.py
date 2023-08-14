@@ -44,7 +44,7 @@ def start_simulation(Env, sim_number, gui=False, _seed=None, setting_obj=None, d
 
     return env.post_process, env
 
-def run(gui=False, number=1, Env=EnvironmentListener, setting_obj=None, file_title=None, dir_name=None, main_env=None, new_players=False, label = "default"):  #handle all the simulations with one simulation parameter
+def run(gui=False, number=1, Env=EnvironmentListener, setting_obj=None, file_title=None, dir_name=None, main_env=None, new_players=False):  #handle all the simulations with one simulation parameter
     _seed=3
 
     post_process = PostGraph(file_title, columns=["sim_number", "sim_step", "veh_id", "edge_id", "speed", "capacity", "budget", "prev_poi", "algo"], dir_name=dir_name)
@@ -57,7 +57,7 @@ def run(gui=False, number=1, Env=EnvironmentListener, setting_obj=None, file_tit
     while sim_number <= number:
 
         try:
-            temp_process, env = start_simulation(Env, sim_number, gui=gui, _seed=_seed, setting_obj=setting_obj, dir_name=dir_name, main_env=main_env, new_players=new_players, label = label)
+            temp_process, env = start_simulation(Env, sim_number, gui=gui, _seed=_seed, setting_obj=setting_obj, dir_name=dir_name, main_env=main_env, new_players=new_players, label = file_title)
 
             post_process.df_list = post_process.df_list + temp_process.df_list
             logging.info(f'SUCCESS FINISHED simulation {sim_number}')
@@ -86,16 +86,15 @@ def increase_cap(start, end, inc, dir_name): # Changing the storage capacity of 
         gui= False
 
         if not main_env:
-            main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_BASE", dir_name = dir_name, label=f"{mySetting.player_capacity_random[0]}_BASE")
+            main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_BASE", dir_name = dir_name)
         else:
             main_env.GraphSetting = mySetting
             main_env.change_capacity()
-            run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_BASE", dir_name = dir_name, main_env=main_env, label=f"{mySetting.player_capacity_random[0]}_BASE")
-
+            run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_BASE", dir_name = dir_name, main_env=main_env)
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = (gui=gui, number=20, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_ATNE", dir_name = dir_name, main_env=main_env, label =f"{mySetting.player_capacity_random[0]}_ATNE"))
-        p2 = mp.Process(target = run, args= (gui=gui, number=20, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_GREEDY", dir_name = dir_name, main_env=main_env, label = f"{mySetting.player_capacity_random[0]}_GREEDY"))
-        p3 = mp.Process(target= run, args = (gui=gui, number=20, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_RANDOM", dir_name = dir_name, main_env=main_env, label ==f"{mySetting.player_capacity_random[0]}_RANDOM"))
+        p1 = mp.Process(target = run, args = (gui=gui, number=20, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_ATNE", dir_name = dir_name, main_env=main_env))
+        p2 = mp.Process(target = run, args= (gui=gui, number=20, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_GREEDY", dir_name = dir_name, main_env=main_env))
+        p3 = mp.Process(target= run, args = (gui=gui, number=20, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_RANDOM", dir_name = dir_name, main_env=main_env))
 
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -118,19 +117,19 @@ def inc_distance_cap(start, end, inc, dir_name): # Changing the distance that th
         gui= False
 
         if not main_env:
-            main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_BASE", dir_name = dir_name,label = f"{mySetting.distance_capacity[0]}_BASE")
+            main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_BASE", dir_name = dir_name)
             global_poi = main_env.global_poi
         else:
             main_env.GraphSetting = mySetting
             main_env.change_distance_capacity()
-            run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_BASE", dir_name = dir_name, main_env=main_env,label = f"{mySetting.distance_capacity[0]}_BASE")
+            run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_BASE", dir_name = dir_name, main_env=main_env)
             main_env.global_poi = global_poi
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = (gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_ATNE", dir_name = dir_name, main_env=main_env, label= f"{mySetting.distance_capacity[0]}_ATNE"))
-        p2 = mp.Process(target = run, args = (gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_GREEDY", dir_name = dir_name, main_env=main_env, label = =f"{mySetting.distance_capacity[0]}_GREEDY"))
-        p3 = mp.Process(target = run, args = (gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_RANDOM", dir_name = dir_name, main_env=main_env, label = f"{mySetting.distance_capacity[0]}_RANDOM"))
-
+        p1 = mp.Process(target = run, args = (gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_ATNE", dir_name = dir_name, main_env=main_env))
+        p2 = mp.Process(target = run, args = (gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_GREEDY", dir_name = dir_name, main_env=main_env))
+        p3 = mp.Process(target = run, args = (gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_RANDOM", dir_name = dir_name, main_env=main_env))
+        
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
         p2.start()
@@ -151,16 +150,16 @@ def increase_sp(sp_list, dir_name): #? Changing the sensing plan of the players
         gui= False
 
         if not main_env:
-            main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_BASE", dir_name = dir_name, label = f"{mySetting.sensing_plan_one}_BASE")
+            main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_BASE", dir_name = dir_name)
         else:
             main_env.GraphSetting = mySetting
-            run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_BASE", dir_name = dir_name, main_env=main_env,  label = f"{mySetting.sensing_plan_one}_BASE")
+            run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_BASE", dir_name = dir_name, main_env=main_env)
         else:
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = ((gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_ATNE", dir_name = dir_name, main_env=main_env, label= f"{mySetting.sensing_plan_one}_ATNE"))
-        p2 = mp.Process(target = run, args = ((gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_GREEDY", dir_name = dir_name, main_env=main_env, label= f"{mySetting.sensing_plan_one}_GREEDY"))
-        p3 = mp.Process(target = run, args = ((gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_RANDOM", dir_name = dir_name, main_env=main_env, label= f"{mySetting.sensing_plan_one}_RANDOM"))
+        p1 = mp.Process(target = run, args = ((gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_ATNE", dir_name = dir_name, main_env=main_env))
+        p2 = mp.Process(target = run, args = ((gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_GREEDY", dir_name = dir_name, main_env=main_env))
+        p3 = mp.Process(target = run, args = ((gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_RANDOM", dir_name = dir_name, main_env=main_env))
 
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -190,10 +189,18 @@ def increase_player(start, end, inc, dir_name): # Changing the number of players
             main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_BASE", dir_name = dir_name, main_env=main_env, new_players=True)
             main_env.global_poi = global_poi
 
-        run(gui=gui, number=1, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_ATNE", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=1, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_GREEDY", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=1, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_RANDOM", dir_name = dir_name, main_env=main_env)
+        #Made all the non base simulations into subprocesses for the computer to do at the same time.
+        p1 = mp.Process(target = run, args = (gui=gui, number=1, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_ATNE", dir_name = dir_name, main_env=main_env))
+        p2 = mp.Process(target = run, args = (gui=gui, number=1, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_GREEDY", dir_name = dir_name, main_env=main_env))
+        p3 = mp.Process(target = run, args = (gui=gui, number=1, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_RANDOM", dir_name = dir_name, main_env=main_env))
 
+        #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
+        p1.start()
+        p2.start()
+        p3.start()
+        p1.join()
+        p2.join()
+        p3.join()
 
     main_env.reward_to_json(dir_name)
 
@@ -214,7 +221,7 @@ def inc_random_theta(start, end, inc, dir_name):
 
 
         run(gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.theta_random}_RANDOM", dir_name = dir_name, main_env=main_env)
-
+        
     main_env.reward_to_json(dir_name)
 
 def inc_poi_radius(start, end, inc, dir_name): # Changing how big the radius of a POI is to consider a player within its possible visitants
@@ -234,11 +241,20 @@ def inc_poi_radius(start, end, inc, dir_name): # Changing how big the radius of 
             run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_BASE", dir_name = dir_name, main_env=main_env)
             main_env.global_poi = global_poi
 
-        run(gui=gui, number=3, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_ATNE", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=3, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_GREEDY", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=3, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_RANDOM", dir_name = dir_name, main_env=main_env)
+        #Made all the non base simulations into subprocesses for the computer to do at the same time.
+        p1 = mp.Process(target = run, args = (gui=gui, number=3, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_ATNE", dir_name = dir_name, main_env=main_env))
+        p2 = mp.Process(target = run, args = (gui=gui, number=3, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_GREEDY", dir_name = dir_name, main_env=main_env))
+        p3 = mp.Process(target = run, args = (gui=gui, number=3, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_RANDOM", dir_name = dir_name, main_env=main_env))
 
-def inc_buffer_interval(start, end, inc, dir_name):
+        #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
+        p1.start()
+        p2.start()
+        p3.start()
+        p1.join()
+        p2.join()
+        p3.join()
+
+def inc_buffer_interval(start, end, inc, dir_name): #? Changing how often the POI scans around for VA with a bigger and bigger sensing radius
     main_env = None
     global_poi = None
 
@@ -256,10 +272,19 @@ def inc_buffer_interval(start, end, inc, dir_name):
             run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_BASE", dir_name = dir_name, main_env=main_env)
             main_env.global_poi = global_poi
 
-        run(gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_ATNE", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_GREEDY", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_RANDOM", dir_name = dir_name, main_env=main_env)
+        #Made all the non base simulations into subprocesses for the computer to do at the same time.
+        p1 = mp.Process(target = run, args = (gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_ATNE", dir_name = dir_name, main_env=main_env)
+        p2 = mp.Process(target = run, args = (gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_GREEDY", dir_name = dir_name, main_env=main_env)
+        p3 = mp.Process(target = run, args = (gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_RANDOM", dir_name = dir_name, main_env=main_env)
 
+        #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
+        p1.start()
+        p2.start()
+        p3.start()
+        p1.join()
+        p2.join()
+        p3.join()
+        
 def inc_buffer_poi(start, end, inc, dir_name):
     main_env = None
     global_poi = None
@@ -274,10 +299,19 @@ def inc_buffer_poi(start, end, inc, dir_name):
             main_env.GraphSetting = mySetting
             main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_BASE", dir_name = dir_name, main_env=main_env)
 
+        #Made all the non base simulations into subprocesses for the computer to do at the same time.
         run(gui=gui, number=3, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_ATNE", dir_name = dir_name, main_env=main_env)
         run(gui=gui, number=3, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_GREEDY", dir_name = dir_name, main_env=main_env)
         run(gui=gui, number=3, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_RANDOM", dir_name = dir_name, main_env=main_env)
-
+        
+        #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
+        p1.start()
+        p2.start()
+        p3.start()
+        p1.join()
+        p2.join()
+        p3.join()
+    
 def run_sim():
     print(traci.__file__)
 
@@ -298,7 +332,6 @@ def run_sim():
     #inc_poi_radius(10, 110, 20, dir_name)
     #inc_buffer_interval(10, 110, 20, dir_name)
     #inc_buffer_poi(10, 110, 20, dir_name)
-    cli_parallel(dir_name)
 
 if __name__ == '__main__':
     run_sim()
