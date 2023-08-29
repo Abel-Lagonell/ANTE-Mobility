@@ -1,9 +1,7 @@
-import numpy as np
-from player import Player
-import heapq
-from _map import Map
-import traci.constants as tc
 #Online Modules
+import heapq
+import traci.constants as tc
+import numpy as np
 from random import choice, randrange
 from multiprocessing import cpu_count, Manager, Queue, Pool
 import traci
@@ -23,10 +21,12 @@ import sys, os
 from sklearn import preprocessing
 
 #User-made Modules
-sys.path.append("../poibin-master")
+from _map import Map
+sys.path.append("./poibin-master")
 from util import *
 from poibin import PoiBin
 from postprocess import DataCaptureGraph
+from player import Player
 
 #todo:
 '''
