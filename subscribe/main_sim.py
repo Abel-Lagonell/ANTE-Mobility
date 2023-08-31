@@ -92,9 +92,9 @@ def increase_cap(start, end, inc, dir_name): # Changing the storage capacity of 
             main_env.change_capacity()
             run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_BASE", dir_name = dir_name, main_env=main_env)
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = (gui=gui, number=20, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_ATNE", dir_name = dir_name, main_env=main_env))
-        p2 = mp.Process(target = run, args= (gui=gui, number=20, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_GREEDY", dir_name = dir_name, main_env=main_env))
-        p3 = mp.Process(target= run, args = (gui=gui, number=20, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.player_capacity_random[0]}_RANDOM", dir_name = dir_name, main_env=main_env))
+        p1 = mp.Process(target = run, args = (gui, 20, EnvironmentListener, mySetting, f"{mySetting.player_capacity_random[0]}_ATNE", dir_name, main_env))
+        p2 = mp.Process(target = run, args= (gui, 20, GreedyEnv, mySetting, f"{mySetting.player_capacity_random[0]}_GREEDY", dir_name, main_env))
+        p3 = mp.Process(target= run, args = (gui, 20, RandomEnv, mySetting, f"{mySetting.player_capacity_random[0]}_RANDOM", dir_name, main_env))
 
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -126,9 +126,9 @@ def inc_distance_cap(start, end, inc, dir_name): # Changing the distance that th
             main_env.global_poi = global_poi
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = (gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_ATNE", dir_name = dir_name, main_env=main_env))
-        p2 = mp.Process(target = run, args = (gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_GREEDY", dir_name = dir_name, main_env=main_env))
-        p3 = mp.Process(target = run, args = (gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.distance_capacity[0]}_RANDOM", dir_name = dir_name, main_env=main_env))
+        p1 = mp.Process(target = run, args = (gui, 5, EnvironmentListener, mySetting, f"{mySetting.distance_capacity[0]}_ATNE", dir_name, main_env))
+        p2 = mp.Process(target = run, args = (gui, 5, GreedyEnv, mySetting, f"{mySetting.distance_capacity[0]}_GREEDY", dir_name, main_env))
+        p3 = mp.Process(target = run, args = (gui, 5, RandomEnv, mySetting, f"{mySetting.distance_capacity[0]}_RANDOM", dir_name, main_env))
         
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -154,12 +154,11 @@ def increase_sp(sp_list, dir_name): #? Changing the sensing plan of the players
         else:
             main_env.GraphSetting = mySetting
             run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_BASE", dir_name = dir_name, main_env=main_env)
-        else:
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = ((gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_ATNE", dir_name = dir_name, main_env=main_env))
-        p2 = mp.Process(target = run, args = ((gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_GREEDY", dir_name = dir_name, main_env=main_env))
-        p3 = mp.Process(target = run, args = ((gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.sensing_plan_one}_RANDOM", dir_name = dir_name, main_env=main_env))
+        p1 = mp.Process(target = run, args = (gui, 5, EnvironmentListener, mySetting, f"{mySetting.sensing_plan_one}_ATNE", dir_name, main_env))
+        p2 = mp.Process(target = run, args = (gui, 5, GreedyEnv, mySetting, f"{mySetting.sensing_plan_one}_GREEDY", dir_name, main_env))
+        p3 = mp.Process(target = run, args = (gui, 5, RandomEnv, mySetting, f"{mySetting.sensing_plan_one}_RANDOM", dir_name, main_env))
 
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -190,9 +189,9 @@ def increase_player(start, end, inc, dir_name): # Changing the number of players
             main_env.global_poi = global_poi
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = (gui=gui, number=1, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_ATNE", dir_name = dir_name, main_env=main_env))
-        p2 = mp.Process(target = run, args = (gui=gui, number=1, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_GREEDY", dir_name = dir_name, main_env=main_env))
-        p3 = mp.Process(target = run, args = (gui=gui, number=1, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.car_numbers}_RANDOM", dir_name = dir_name, main_env=main_env))
+        p1 = mp.Process(target = run, args = (gui, 1, EnvironmentListener, mySetting, f"{mySetting.car_numbers}_ATNE", dir_name, main_env))
+        p2 = mp.Process(target = run, args = (gui, 1, GreedyEnv, mySetting, f"{mySetting.car_numbers}_GREEDY", dir_name, main_env))
+        p3 = mp.Process(target = run, args = (gui, 1, RandomEnv, mySetting, f"{mySetting.car_numbers}_RANDOM", dir_name, main_env))
 
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -242,9 +241,9 @@ def inc_poi_radius(start, end, inc, dir_name): # Changing how big the radius of 
             main_env.global_poi = global_poi
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = (gui=gui, number=3, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_ATNE", dir_name = dir_name, main_env=main_env))
-        p2 = mp.Process(target = run, args = (gui=gui, number=3, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_GREEDY", dir_name = dir_name, main_env=main_env))
-        p3 = mp.Process(target = run, args = (gui=gui, number=3, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.poi_radius}_RANDOM", dir_name = dir_name, main_env=main_env))
+        p1 = mp.Process(target = run, args = (gui, 3, EnvironmentListener, mySetting, f"{mySetting.poi_radius}_ATNE", dir_name, main_env))
+        p2 = mp.Process(target = run, args = (gui, 3, GreedyEnv, mySetting, f"{mySetting.poi_radius}_GREEDY", dir_name, main_env))
+        p3 = mp.Process(target = run, args = (gui, 3, RandomEnv, mySetting, f"{mySetting.poi_radius}_RANDOM", dir_name, main_env))
 
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -273,9 +272,9 @@ def inc_buffer_interval(start, end, inc, dir_name): #? Changing how often the PO
             main_env.global_poi = global_poi
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        p1 = mp.Process(target = run, args = (gui=gui, number=5, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_ATNE", dir_name = dir_name, main_env=main_env)
-        p2 = mp.Process(target = run, args = (gui=gui, number=5, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_GREEDY", dir_name = dir_name, main_env=main_env)
-        p3 = mp.Process(target = run, args = (gui=gui, number=5, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_RANDOM", dir_name = dir_name, main_env=main_env)
+        p1 = mp.Process(target = run, args = (gui, 5, EnvironmentListener, mySetting, f"{mySetting.buffer_interval}_ATNE", dir_name, main_env))
+        p2 = mp.Process(target = run, args = (gui, 5, GreedyEnv, mySetting, f"{mySetting.buffer_interval}_GREEDY", dir_name, main_env))
+        p3 = mp.Process(target = run, args = (gui, 5, RandomEnv, mySetting, f"{mySetting.buffer_interval}_RANDOM", dir_name, main_env))
 
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
@@ -300,10 +299,10 @@ def inc_buffer_poi(start, end, inc, dir_name):
             main_env = run(gui=gui, number=1, Env=BaseEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_BASE", dir_name = dir_name, main_env=main_env)
 
         #Made all the non base simulations into subprocesses for the computer to do at the same time.
-        run(gui=gui, number=3, Env=EnvironmentListener, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_ATNE", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=3, Env=GreedyEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_GREEDY", dir_name = dir_name, main_env=main_env)
-        run(gui=gui, number=3, Env=RandomEnv, setting_obj = mySetting, file_title=f"{mySetting.buffer_interval}_RANDOM", dir_name = dir_name, main_env=main_env)
-        
+        p1 = mp.Process(target = run, args = (gui, 3, EnvironmentListener, mySetting, f"{mySetting.buffer_interval}_ATNE", dir_name, main_env))
+        p2 = mp.Process(target = run, args = (gui, 3, GreedyEnv, mySetting, f"{mySetting.buffer_interval}_GREEDY", dir_name, main_env))
+        p3 = mp.Process(target = run, args = (gui, 3, RandomEnv, mySetting, f"{mySetting.buffer_interval}_RANDOM", dir_name, main_env))
+
         #Making sure that they all start and also making sure that the computer runs through batches of simulations at a time to make sure that the computer doesn't get overwhelmed with concurrent processes.
         p1.start()
         p2.start()
