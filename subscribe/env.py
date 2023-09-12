@@ -22,7 +22,7 @@ from sklearn import preprocessing
 
 #User-made Modules
 from _map import Map
-sys.path.append("../poibin-master")
+sys.path.append("./poibin-master")
 from util import *
 from poibin import PoiBin
 from postprocess import DataCaptureGraph
